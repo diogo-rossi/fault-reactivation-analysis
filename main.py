@@ -906,4 +906,4 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    sr.run(main, screen=1, open_as_app=True)
+    sr.run(main, screen=1, open_as_app=True, fill_page_content=False)
