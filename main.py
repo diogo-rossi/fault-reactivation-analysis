@@ -318,21 +318,24 @@ def main():
 
         for i, g in tqdm(enumerate(gamma_data)):
             print("Getting meshgrid for gamma in layer", i)
+            _, _, gamma_data[i] = np.meshgrid(z_inj, dP, g / 1000)
+        # g: [kPa/m] -> [MPa/m]
         gamma_thickness = tuple(zip(gamma_data, thickness))
 
+        print("Getting FS map")
         FSS = FS(
             inj_layer_pos,
-            dPini,
-            gamaW,
-            _dP,
+            dPini,  # MPa
+            gamaW / 1000,  # gamaW: [kPa/m] -> [MPa/m]
+            _dP,  # MPa
             _z,
             _alpha,
             _Ko,
             _Ka,
-            _angtheta,
-            _friction,
-            _cohesion,
-            *gamma_thickness,
+            np.radians(_angtheta),
+            np.radians(_friction),
+            _cohesion,  # MPa
+            *gamma_thickness,  # MPa/m , m
         )
         f.update_figure(
             6,
