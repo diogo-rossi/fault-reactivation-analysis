@@ -10,6 +10,7 @@ dependencies = [
     "scipy>=1.15.3",
     "streamlit-vertical-slider>=2.5.5",
     "streamlitrunner>=0.1.2",
+    "tqdm>=4.67.3",
 ]
 
 [dependency-groups]
