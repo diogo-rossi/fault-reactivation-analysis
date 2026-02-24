@@ -32,10 +32,11 @@ class ProbabilisticAnalisisFigure:
             vertical_spacing=0.075,
         )
 
-        self.rows = [1, 1, 1, 2, 2, 2]
-        self.cols = [1, 2, 3, 1, 2, 3]
+        self.rows = [1, 1, 1, 2, 2, 2, 1]
+        self.cols = [1, 2, 3, 1, 2, 3, 4]
 
-    def update_figure(self, i, data, hist):
+    def update_figure(self, i, data, hist, xbins=None, nbins=None):
+        nbins = nbins or self.num_bins
         self.fig.update_yaxes(
             row=self.rows[i],
             col=self.cols[i],
@@ -54,6 +55,7 @@ class ProbabilisticAnalisisFigure:
                 nbinsx=self.num_bins,
                 name=data[0],
                 marker=dict(line=dict(width=0)),
+                xbins=xbins,
             ),
             row=self.rows[i],
             col=self.cols[i],
