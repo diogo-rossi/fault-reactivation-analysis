@@ -261,9 +261,9 @@ class DeterministicAnalisisFigure:
         )
 
     def update_current_point(self, x, z):
-        self.fig.add_hline(z, 1, 1, line_color="black", line_width=2, line_dash="dash")
-        self.fig.add_hline(z, 1, 2, line_color="black", line_width=2, line_dash="dash")
-        self.fig.add_hline(z, 1, 3, line_color="black", line_width=2, line_dash="dash")
-        self.fig.add_hline(z, 2, 4, line_color="black", line_width=2)
-        self.fig.add_vline(x, 2, 4, line_color="black", line_width=2)
+        self.fig.add_hline(z, 1, 1, line_color="black", line_width=2, line_dash="dash")  # type: ignore
+        self.fig.add_hline(z, 1, 2, line_color="black", line_width=2, line_dash="dash")  # type: ignore
+        self.fig.add_hline(z, 1, 3, line_color="black", line_width=2, line_dash="dash")  # type: ignore
+        self.fig.add_hline(z, 2, 4, line_color="black", line_width=2)  # type: ignore
+        self.fig.add_vline(x, 2, 4, line_color="black", line_width=2)  # type: ignore
         self.plot(2, 4, [x], [z], name="Current", showlegend=False)

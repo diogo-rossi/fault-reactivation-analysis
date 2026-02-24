@@ -1,125 +1,22 @@
 from __future__ import annotations
 
-import os
-from typing import Any, Literal, cast, overload
-
 import numpy as np
 import streamlit as st
 import streamlitrunner as sr
 from numpy import float64
 from numpy.typing import NDArray
-from pandas import DataFrame, Series
-from plotly.graph_objects import Contour, Figure, Histogram, Scatter
-from plotly.graph_objs.scatter import Line
-from plotly.subplots import make_subplots
-from scipy.stats import percentileofscore, truncnorm
 
-from deterministic_analisis import DeterministicAnalisisFigure, axeskwargs
+from calc_functions import dist
+from column_configs import column_config_injection_layer_df, column_config_layers_df
+from dataframes import injection_layer_df, layers_df
+from figure_deterministic import DeterministicAnalisisFigure
+from figure_probabilistic import ProbabilisticAnalisisFigure
 from session_state import ss
 from tables_types import InjectionLayerTable, LayerTable
-
-# os.system("cls")
 
 VERTICAL_DIVISIONS: int = 1000
 
 gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
-
-
-# %%          FUNCTIONS
-############# FUNCTIONS ################################################################
-
-
-def FS(
-    inj_id: int,
-    z: float,
-    alpha: float,
-    gammaW: float,
-    dPr: float,
-    dP: float,
-    Ko: float,
-    Ka: float,
-    theta: float,
-    phi: float,
-    c: float,
-    *gamma_thickness: tuple[float, float],
-):
-    gammas, thickness = zip(*gamma_thickness)
-    gammas = np.array(gammas)
-    thickness = np.array(thickness)
-    SvEff0 = (
-        (gammas[:inj_id] * thickness[:inj_id]).sum()
-        + gammas[inj_id](z - thickness[:inj_id].sum())
-        - alpha * (gammaW * z + dPr)
-    )
-    SvEff = SvEff0 - alpha * dP
-    ShEff = Ko * SvEff0 - Ka * alpha * dP
-    return (
-        c + (ShEff * (np.cos(theta) ** 2) + SvEff * (np.sin(theta) ** 2)) * np.tan(phi)
-    ) / ((SvEff - ShEff) * np.sin(theta) * np.cos(theta))
-
-
-def dist(
-    number_of_values: int,
-    distribution_choice: Literal["Uniform", "Triangular", "Normal"],
-    mean: float,
-    std_dev: float,
-    lower_value: float,
-    upper_value: float,
-):
-    """Return a distribution based on statistics"""
-    a = (lower_value - mean) / std_dev
-    b = (upper_value - mean) / std_dev
-    if distribution_choice == "Uniform":
-        return np.random.uniform(lower_value, upper_value, number_of_values)
-    elif distribution_choice == "Triangular":
-        return np.random.triangular(lower_value, mean, upper_value, number_of_values)
-    elif distribution_choice == "Normal":
-        return truncnorm.rvs(a, b, mean, std_dev, number_of_values)
-
-
-def line(
-    row: int, col: int, value: float, figure: Figure, horizontal: bool = False, **kwargs
-):
-    """Adds a line to `fig`, horizontal or vertical"""
-    if horizontal:
-        figure.add_hline(value, row, col, line_color="black", line_width=2, **kwargs)  # type: ignore
-    else:
-        figure.add_vline(value, row, col, line_color="black", line_width=2, **kwargs)  # type: ignore
-
-
-def plot(
-    row: int,
-    col: int,
-    x: NDArray[float64] | list[float],
-    y: NDArray[float64] | list[float],
-    name: str,
-    figure: Figure,
-    color: str = "black",
-    width: int = 1,
-    showlegend: bool = True,
-    **kwargs,
-):
-    """Adds a Scatter plot to `fig`"""
-    figure.add_trace(
-        row=row,
-        col=col,
-        trace=Scatter(
-            x=x,
-            y=y,
-            name=name,
-            line=Line(color=color, width=width),
-            showlegend=showlegend,
-            **kwargs,
-        ),
-    )
-
-
-from dataframes import (
-    column_config_injection_layer_df,
-    column_config_layers_df,
-    injection_layer_df,
-    layers_df,
-)
 
 # %%          MAIN FUNCTION
 ############# MAIN FUNCTION ############################################################
@@ -333,13 +230,9 @@ def main():
     f.add_contours(x=dP, y=z[inj_pos], z=FSdet)
     f.update_layout()
 
-    # ss.figure_tab2 = fig
-
     ####################################################################################
-    # %
+    # %           SLIDERS LOGIC
     ####################################################################################
-
-    figure = f.fig  # Figure(ss.figure_tab2)
 
     dP_slider_container = tab2.container()
     cols = tab2.columns([1, 35])
@@ -348,7 +241,7 @@ def main():
     f.update_current_point(dP[dPstep], z[layer])
 
     event = cols[1].plotly_chart(
-        figure, theme=None, on_select="rerun", selection_mode="points"
+        f.fig, theme=None, on_select="rerun", selection_mode="points"
     )
     if event and event["selection"] and event["selection"]["points"]:
         ss.dP_slider_value = event["selection"]["points"][0]["x"]
@@ -394,70 +287,29 @@ def main():
     nbins = cols[1].number_input("Number of bins", value=ss.bins)
     ss.bins = nbins
     cols[2].header("Analisis results")
-    fig_prob = make_subplots(
-        rows=2,
-        cols=4,
-        horizontal_spacing=0.05,
-        vertical_spacing=0.075,
-    )
-    rows = [1, 1, 1, 2, 2, 2]
-    cols = [1, 2, 3, 1, 2, 3]
-    for i in final_injection_layer_df.index:
 
-        data = final_injection_layer_df.iloc[i].to_list()
-        hist = dist(Nrel, *data[1:])
-        fig_prob.update_yaxes(
-            row=rows[i],
-            col=cols[i],
-            title_text=f"Frequency",
-            **axeskwargs,
-        )
+    if ss.run_calcs:
 
-        fig_prob.update_xaxes(
-            row=rows[i],
-            col=cols[i],
-            title_text=data[0],
-            **axeskwargs,
-        )
-        fig_prob.add_trace(
-            Histogram(
-                x=hist,
-                nbinsx=nbins,
-                name=data[0],
-                marker=dict(line=dict(width=0)),
-            ),
-            row=rows[i],
-            col=cols[i],
-        )
-        fig_prob.add_annotation(
-            text=f"Mean = {data[2]:.2f}<br>"
-            f"Std = {data[3]:.2f}<br>"
-            f"Min = {data[4]:.2f}<br>"
-            f"Max = {data[5]:.2f}<br>"
-            f"Samples = {Nrel}",
-            xref="x2 domain",
-            yref="y2 domain",
-            x=0.98,
-            y=0.98,
-            showarrow=False,
-            align="right",
-            bordercolor="black",
-            borderwidth=1,
-            bgcolor="white",
-            row=rows[i],
-            col=cols[i],
-        )
+        f = ProbabilisticAnalisisFigure(Nrel, nbins)
 
-    fig_prob.update_layout(
-        template="simple_white",
-        plot_bgcolor="white",
-        height=650,
-        margin=dict(l=50, r=40, t=30, b=0),
-        showlegend=True,
-    )
-    tab3.plotly_chart(fig_prob, theme=None)
+        hist_data = []
 
-    ss.run_calcs = False
+        for i in final_injection_layer_df.index:
+
+            data = final_injection_layer_df.iloc[i].to_list()
+            hist_data.append(dist(Nrel, *data[1:]))
+            f.update_figure(i, data, hist_data[-1])
+
+        f.update_layout()
+        tab3.plotly_chart(f.fig, theme=None)
+
+        gamma_data = []
+
+        for i in final_layers_df.index:
+            data = final_layers_df.iloc[i].to_list()
+            gamma_data.append(dist(Nrel, *data[2:]))
+
+        ss.run_calcs = False
 
 
 if __name__ == "__main__":
