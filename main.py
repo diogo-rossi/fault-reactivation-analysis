@@ -1,17 +1,15 @@
 from __future__ import annotations
 
 import numpy as np
-import streamlit as st
 import streamlitrunner as sr
 from numpy import float64
 from numpy.typing import NDArray
+from tqdm import tqdm
 
-from calc_functions import dist
-from column_configs import column_config_injection_layer_df, column_config_layers_df
+from calc_functions import FS, dist
 from dataframes import injection_layer_df, layers_df
 from figure_deterministic import DeterministicAnalisisFigure
 from figure_probabilistic import ProbabilisticAnalisisFigure
-from session_state import ss
 from tables_types import InjectionLayerTable, LayerTable
 
 VERTICAL_DIVISIONS: int = 1000
@@ -23,6 +21,11 @@ gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
 
 
 def main():
+    import streamlit as st
+
+    from column_configs import column_config_injection_layer_df, column_config_layers_df
+    from session_state import ss
+
     st.set_page_config(layout="wide")
     st.markdown(
         """
@@ -38,23 +41,11 @@ def main():
         unsafe_allow_html=True,
     )
 
-    if ss.get("run_calcs") is None:
-        ss.run_calcs = True
-
-    if ss.get("layer_names") is None:
-        ss.layer_names = layers_df["layer"].to_list()
-
-    if ss.get("layer_slider_value") is None:
-        ss.layer_slider_value = 460
-
-    if ss.get("dP_slider_value") is None:
-        ss.dP_slider_value = 1
-
-    if ss.get("figure_tab2") is None:
-        ss.figure_tab2 = None
-
-    if ss.get("bins") is None:
-        ss.bins = 50
+    ss.init_key("run_calcs", True)
+    ss.init_key("fig2", None)
+    ss.init_key("fig3", None)
+    ss.init_key("layer_slider_value", 460)
+    ss.init_key("dP_slider_value", 1)
 
     tab1, tab2, tab3 = st.tabs(
         [
@@ -73,13 +64,13 @@ def main():
 
     cols = tab1.columns([13, 5, 4, 4, 4, 5, 4, 3])
     cols[0].header("Parameters of the injection layer")
-    dPres = cols[1].number_input(value=0.0, label="Initial overpressure [MPa]")
+    dPini = cols[1].number_input(value=0.0, label="Initial overpressure [MPa]")
     dPmax = cols[2].number_input(value=5.0, label="Maximum ΔP [MPa]")
     numDP = cols[3].number_input(value=50, label="Number of steps")
     gamaW = cols[4].number_input(value=10.0, label="Water gradient [kN/m³]")
     listcontainer = cols[5].container()
 
-    Nrel = cols[6].number_input("Number of realizations", value=100000)
+    Nrel = cols[6].number_input("Number of realizations", value=1000)
     cols[7].button("Run", on_click=set_run_calcs)
 
     ## DATAFRAMES
@@ -132,7 +123,8 @@ def main():
     # %           GETTING PARAMETERS
     ####################################################################################
 
-    depths = final_layers_df.depth.to_numpy()
+    depths: np.ndarray = final_layers_df.depth.to_numpy()
+    thickness: np.ndarray = np.diff(np.insert(depths, 0, 0))
     depths = np.insert(depths, 0, 0)
     max_depth = depths.max()
     z = np.linspace(0, max_depth, VERTICAL_DIVISIONS)
@@ -151,7 +143,7 @@ def main():
 
     # MPa to kPa
     dPmax *= 1000
-    dPres *= 1000
+    dPini *= 1000
     numDP += 1
 
     dP = np.linspace(0, dPmax, numDP)
@@ -163,7 +155,7 @@ def main():
     Pp = gamaW * z[:, None] * np.ones(numDP)
     FSres = np.zeros(VERTICAL_DIVISIONS)[:, None] * np.ones(numDP)
 
-    Pp[inj_pos, :] = Pp[inj_pos, :] + dPres
+    Pp[inj_pos, :] = Pp[inj_pos, :] + dPini
     for i in range(numDP):
         Pp[inj_pos, i] = Pp[inj_pos, i] + dP[i]
 
@@ -197,38 +189,42 @@ def main():
 
     # dP_slider *= 1000
     dPstep: int = np.where(dP >= dP_slider if dPmax > 0 else dP <= dP_slider)[0][0]
-
+    Smax = np.max(Sn)
+    Tmax = coh + Smax * np.tan(phi)
     ####################################################################################
     # %           BUILD FIGURE
     ####################################################################################
-    f = DeterministicAnalisisFigure(z)
-    f.update_stress_axes(max_depth)
+    import copy
 
-    f.add_stress_curve(SvTotal, "red", "σ<sub>v</sub> Total")
+    f = copy.deepcopy(ss.fig2)
+    if f is None:
+        f = DeterministicAnalisisFigure(z)
+        f.update_stress_axes(max_depth)
+        f.add_stress_curve(SvTotal, "red", "σ<sub>v</sub> Total")
+        f.update_fault_stress_axes(np.max(list(map(np.max, [Tn, Ts, Sn]))))
+        f.update_FS_axes(np.max(FSres))
+        f.update_mohr_coulomb_axes(Smax, Tmax)
+        f.plot_mohr_envelope(coh)
+        f.update_contour_axes(dP.min(), dP.max(), z[inj_pos][-1], z[inj_pos][0])
+        f.add_contours(x=dP, y=z[inj_pos], z=FSdet)
+        f.update_layout()
+        ss.fig2 = copy.deepcopy(f)
+
     f.add_stress_curve(SvEff[:, dPstep], "brown", "σ'<sub>v</sub> Effective")
     f.add_stress_curve(ShTotal[:, dPstep], "green", "σ<sub>h</sub> Total")
     f.add_stress_curve(ShEff[:, dPstep], "cornflowerblue", "σ'<sub>h</sub> Effective")
     f.add_stress_curve(Pp[:, dPstep], "blue", "ΔP")
 
-    f.update_fault_stress_axes(np.max(list(map(np.max, [Tn, Ts, Sn]))))
     f.add_fault_stress_curve(Sn[:, dPstep], "black", "σ<sub>n</sub> Normal")
     f.add_fault_stress_curve(Tn[:, dPstep], "magenta", "𝜏<sub>n</sub> Shear")
     f.add_fault_stress_curve(Ts[:, dPstep], "chocolate", "𝜏<sub>s</sub> Limit")
 
-    f.update_FS_axes(np.max(FSres))
     f.add_FS_curve(FSres[:, dPstep], "black", "SF")
-    f.add_FS_hline(1.0)
-    Smax = np.max(Sn)
-    Tmax = coh + Smax * np.tan(phi)
 
-    f.update_mohr_coulomb_axes(Smax, Tmax)
-    f.plot_mohr_envelope(coh)
     f.plot_mohr_circle(SvEff[layer, dPstep], ShEff[layer, dPstep], np.degrees(theta))
 
     f.add_hlines_stress_curve(depths)
-    f.update_contour_axes(dP.min(), dP.max(), z[inj_pos][-1], z[inj_pos][0])
-    f.add_contours(x=dP, y=z[inj_pos], z=FSdet)
-    f.update_layout()
+    f.add_FS_hline(1.0)
 
     ####################################################################################
     # %           SLIDERS LOGIC
@@ -284,7 +280,7 @@ def main():
 
     cols = tab3.columns([6, 1, 4])
     cols[0].header("Histogram distribution of the injection layer parameters")
-    nbins = cols[1].number_input("Number of bins", value=ss.bins)
+    nbins = cols[1].number_input("Number of bins", value=50, on_change=set_run_calcs)
     ss.bins = nbins
     cols[2].header("Analisis results")
 
@@ -301,15 +297,57 @@ def main():
             f.update_figure(i, data, hist_data[-1])
 
         f.update_layout()
-        tab3.plotly_chart(f.fig, theme=None)
 
-        gamma_data = []
+        ss.fig3 = f
+
+        gamma_data: list[NDArray[float64]] = []
 
         for i in final_layers_df.index:
             data = final_layers_df.iloc[i].to_list()
             gamma_data.append(dist(Nrel, *data[2:]))
 
+        _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
+
+        z_inj = z[inj_pos]
+        _z, _dP, _alpha = np.meshgrid(z_inj, dP, _alpha)
+        _, _, _Ko = np.meshgrid(z_inj, dP, _Ko)
+        _, _, _Ka = np.meshgrid(z_inj, dP, _Ka)
+        _, _, _cohesion = np.meshgrid(z_inj, dP, _cohesion)
+        _, _, _friction = np.meshgrid(z_inj, dP, _friction)
+        _, _, _angtheta = np.meshgrid(z_inj, dP, _angtheta)
+
+        for i, g in tqdm(enumerate(gamma_data)):
+            _, _, gamma_data[i] = np.meshgrid(z_inj, dP, g)
+        gamma_thickness = tuple(zip(gamma_data, thickness))
+
+        FSS = FS(
+            inj_layer_pos,
+            dPini,
+            gamaW,
+            _dP,
+            _z,
+            _alpha,
+            _Ko,
+            _Ka,
+            _angtheta,
+            _friction,
+            _cohesion,
+            *gamma_thickness,
+        )
+        f.update_figure(
+            6,
+            [0, 0, 0, 0, 0, 0, 0],
+            FSS[25, 200, :],
+            nbins=10000,
+            xbins=dict(start=0, end=5, size=0.10),
+        )
         ss.run_calcs = False
+
+        print(FSS.shape)
+        print(FSS.max())
+
+    if ss.fig3 is not None:
+        tab3.plotly_chart(ss.fig3.fig, theme=None)
 
 
 if __name__ == "__main__":
