@@ -1,10 +1,26 @@
+import types
 from typing import Any, Literal, cast
 
 from plotly.graph_objects import Figure
 from streamlit import session_state as ss
 from streamlit.runtime.state import SessionStateProxy
 
+from figure_deterministic import DeterministicAnalisisFigure
+from figure_probabilistic import ProbabilisticAnalisisFigure
 from tables_types import LayerTable
+
+Keys = Literal[
+    "layer_names",
+    "final_layers_df",
+    "inj_top",
+    "inj_bas",
+    "run_calcs",
+    "layer_slider_value",
+    "dP_slider_value",
+    "fig2",
+    "fig3",
+    "bins",
+]
 
 
 class SessionState(SessionStateProxy):
@@ -15,27 +31,20 @@ class SessionState(SessionStateProxy):
     run_calcs: bool
     layer_slider_value: int
     dP_slider_value: float
-    figure_tab2: Figure | None
+    fig2: DeterministicAnalisisFigure | None
+    fig3: ProbabilisticAnalisisFigure | None
     bins: int
 
     def __getitem__(self, n) -> Any: ...
 
-    def get(
-        self,
-        n: Literal[
-            "layer_names",
-            "final_layers_df",
-            "inj_top",
-            "inj_bas",
-            "run_calcs",
-            "layer_slider_value",
-            "dP_slider_value",
-            "figure_tab2",
-            "bins",
-        ],
-        default: Any | None = None,
-    ):
+    def get(self, n: Keys, default: Any | None = None):
         return super().get(n, default)
 
+    def init_key(self, key: Keys, value: Any):
+        if key not in ss:
+            self[key] = value
+
+
+setattr(ss, "init_key", types.MethodType(SessionState.init_key, ss))
 
 ss = cast(SessionState, ss)
