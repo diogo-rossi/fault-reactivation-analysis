@@ -45,7 +45,7 @@ def main():
     ss.init_key("fig2", None)
     ss.init_key("fig3", None)
     ss.init_key("layer_slider_value", 460)
-    ss.init_key("dP_slider_value", 1)
+    ss.init_key("dP_slider_value", 0)
 
     tab1, tab2, tab3 = st.tabs(
         [
@@ -101,11 +101,6 @@ def main():
 
     with listcontainer:
         inj_lay_name = st.selectbox("Injection layer", ss.layer_names, index=3)
-
-    if "inj_top" not in ss:
-        ss.inj_top = final_layers_df.depth[3]
-    if "inj_bas" not in ss:
-        ss.inj_bas = final_layers_df.depth[4]
 
     if None not in final_layers_df.depth:
         inj_layer_pos = (
@@ -252,7 +247,6 @@ def main():
             min_value=0.0 if dPmax > 0 else dPmax,
             max_value=dPmax if dPmax > 0 else 0.0,
             step=np.abs(dPmax / (numDP - 1)),
-            # value=1.00,
             key="dP_slider_value",
         )
 
