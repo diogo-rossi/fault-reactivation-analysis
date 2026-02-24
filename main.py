@@ -337,12 +337,13 @@ def main():
             _cohesion,  # MPa
             *gamma_thickness,  # MPa/m , m
         )
+
         f.update_figure(
             6,
             [0, 0, 0, 0, 0, 0, 0],
-            FSS[25, 200, :],
-            nbins=10000,
-            xbins=dict(start=0, end=5, size=0.10),
+            FSS[len(dP) // 2, len(z_inj // 2), :],
+            nbins=nbins,
+            xbins=dict(start=0, end=10, size=10.0 / nbins),
         )
         ss.run_calcs = False
 
