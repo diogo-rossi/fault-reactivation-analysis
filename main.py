@@ -303,15 +303,21 @@ def main():
         _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
 
         z_inj = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 101)
+        print("Getting meshgrid for alpha")
         _z, _dP, _alpha = np.meshgrid(z_inj, dP, _alpha)
+        print("Getting meshgrid for Ko")
         _, _, _Ko = np.meshgrid(z_inj, dP, _Ko)
+        print("Getting meshgrid for Ka")
         _, _, _Ka = np.meshgrid(z_inj, dP, _Ka)
+        print("Getting meshgrid for cohesion")
         _, _, _cohesion = np.meshgrid(z_inj, dP, _cohesion)
+        print("Getting meshgrid for friction")
         _, _, _friction = np.meshgrid(z_inj, dP, _friction)
+        print("Getting meshgrid for theta")
         _, _, _angtheta = np.meshgrid(z_inj, dP, _angtheta)
 
         for i, g in tqdm(enumerate(gamma_data)):
-            _, _, gamma_data[i] = np.meshgrid(z_inj, dP, g)
+            print("Getting meshgrid for gamma in layer", i)
         gamma_thickness = tuple(zip(gamma_data, thickness))
 
         FSS = FS(
