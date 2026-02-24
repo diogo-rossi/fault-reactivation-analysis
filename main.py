@@ -192,7 +192,7 @@ def main():
     import copy
 
     f = copy.deepcopy(ss.fig2)
-    if f is None:
+    if f is None or ss.run_calcs:
         f = DeterministicAnalisisFigure(z)
         f.update_stress_axes(max_depth)
         f.add_stress_curve(SvTotal, "red", "σ<sub>v</sub> Total")
