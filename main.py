@@ -1,17 +1,22 @@
 from __future__ import annotations
+
 import os
+from typing import Any, Literal, cast, overload
+
+import numpy as np
 import streamlit as st
 import streamlitrunner as sr
-import numpy as np
 from numpy import float64
 from numpy.typing import NDArray
 from pandas import DataFrame, Series
-from typing import overload, Literal, Any, cast
-from plotly.subplots import make_subplots
-from plotly.graph_objects import Scatter, Contour, Histogram, Figure
+from plotly.graph_objects import Contour, Figure, Histogram, Scatter
 from plotly.graph_objs.scatter import Line
-from scipy.stats import truncnorm, percentileofscore
-from streamlit import session_state as ss
+from plotly.subplots import make_subplots
+from scipy.stats import percentileofscore, truncnorm
+
+from deterministic_analisis import DeterministicAnalisisFigure, axeskwargs
+from session_state import ss
+from tables_types import InjectionLayerTable, LayerTable
 
 # os.system("cls")
 
@@ -20,35 +25,37 @@ VERTICAL_DIVISIONS: int = 1000
 gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
 
 
-# fmt: off
-fig = make_subplots(
-    rows=2,
-    cols=4,
-    specs=[
-        [{"rowspan": 2}, {"rowspan": 2}, {"rowspan": 2}, {"colspan": 1}],
-        [          None,           None,           None, {"colspan": 1}],
-    ],
-    horizontal_spacing=0.01,
-    vertical_spacing=0.07,
-)
-# fmt: on
-
-axeskwargs = {
-    "mirror": "allticks",
-    "ticks": "inside",
-    "showgrid": True,
-    "showline": True,
-    "showticklabels": True,
-    "title_standoff": 2,
-}
-
 # %%          FUNCTIONS
 ############# FUNCTIONS ################################################################
 
 
-def FSfun(gammas, thicknesses, inj_id):
-    """TODO"""
-    gammas[:inj_id] * thicknesses[:inj_id]
+def FS(
+    inj_id: int,
+    z: float,
+    alpha: float,
+    gammaW: float,
+    dPr: float,
+    dP: float,
+    Ko: float,
+    Ka: float,
+    theta: float,
+    phi: float,
+    c: float,
+    *gamma_thickness: tuple[float, float],
+):
+    gammas, thickness = zip(*gamma_thickness)
+    gammas = np.array(gammas)
+    thickness = np.array(thickness)
+    SvEff0 = (
+        (gammas[:inj_id] * thickness[:inj_id]).sum()
+        + gammas[inj_id](z - thickness[:inj_id].sum())
+        - alpha * (gammaW * z + dPr)
+    )
+    SvEff = SvEff0 - alpha * dP
+    ShEff = Ko * SvEff0 - Ka * alpha * dP
+    return (
+        c + (ShEff * (np.cos(theta) ** 2) + SvEff * (np.sin(theta) ** 2)) * np.tan(phi)
+    ) / ((SvEff - ShEff) * np.sin(theta) * np.cos(theta))
 
 
 def dist(
@@ -107,251 +114,12 @@ def plot(
     )
 
 
-def plot_mohr_circle(
-    fig: Figure,
-    sigma1: float,
-    sigma3: float,
-    angle: float,
-    color: str = "black",
-    label: str = "Mohr Circle",
-):
-    """Plot the upper half of Mohr's circle in `fig[1,4]` with shear plane point"""
-    center = (sigma1 + sigma3) / 2
-    radius = (sigma1 - sigma3) / 2
-
-    theta = np.linspace(0, np.pi, 100)
-    x = center + radius * np.cos(theta)
-    y = radius * np.sin(theta)
-
-    plot(1, 4, x, y, name=label, color=color, showlegend=False, figure=fig)
-
-    theta_rad = np.radians(2 * angle)
-    sigma_n = center - radius * np.cos(theta_rad)
-    tau = radius * np.sin(theta_rad)
-    plot(
-        1,
-        4,
-        np.array([center, sigma_n]),
-        np.array([0, tau]),
-        name="Stress on fault",
-        showlegend=True,
-        line_dash="dash",
-        figure=fig,
-    )
-
-
-# %%          CLASSES
-############# CLASSES ##################################################################
-
-
-class InjectionLayerTable(DataFrame):
-    parameter: Series[str]
-    distr: Series[str]
-    average: Series[float]
-    stddevi: Series[float]
-    minimum: Series[float]
-    maximum: Series[float]
-
-    @overload
-    def __getitem__(self, n: Literal["parameter"]) -> Series[str]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["distr"]) -> Series[str]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["average"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["stddevi"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["minimum"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["maximum"]) -> Series[float]: ...
-
-    def __getitem__(self, n) -> Any:
-        return super().__getitem__(n)
-
-    def get_value_from_df(
-        self,
-        line_name: Literal[
-            "Ko", "Ka", "biot", "cohesion", "friction", "inclination", "overpressure"
-        ],
-        column_name: Literal["average", "stddevi", "minimum", "maximum"],
-    ):
-        return self[column_name][
-            [line_name.lower() in line.lower() for line in self.iloc[:, 0]]
-        ].to_list()[0]
-
-    def get_mean_value_from_df(
-        self,
-        line_name: Literal[
-            "Ko", "Ka", "biot", "cohesion", "friction", "inclination", "overpressure"
-        ],
-    ):
-        return self.get_value_from_df(line_name, "average")
-
-
-class LayerTable(DataFrame):
-    layer: Series[str]
-    depth: Series[float]
-    distr: Series[str]
-    average: Series[float]
-    stddevi: Series[float]
-    minimum: Series[float]
-    maximum: Series[float]
-
-    @overload
-    def __getitem__(self, n: Literal["layer"]) -> Series[str]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["depth"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["distr"]) -> Series[str]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["average"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["stddevi"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["minimum"]) -> Series[float]: ...
-
-    @overload
-    def __getitem__(self, n: Literal["maximum"]) -> Series[float]: ...
-
-    def __getitem__(self, n) -> Any:
-        return super().__getitem__(n)
-
-
-from streamlit.runtime.state import SessionStateProxy
-
-
-class SessionState(SessionStateProxy):
-    layer_names: list[str]
-    final_layers_df: LayerTable
-    inj_top: float
-    inj_bas: float
-    run_calcs: bool
-    layer_slider_value: int
-    dP_slider_value: float
-    figure_tab2: Figure | None
-    bins: int
-
-    def __getitem__(self, n) -> Any: ...
-
-    def get(
-        self,
-        n: Literal[
-            "layer_names",
-            "final_layers_df",
-            "inj_top",
-            "inj_bas",
-            "run_calcs",
-            "layer_slider_value",
-            "dP_slider_value",
-            "figure_tab2",
-            "bins",
-        ],
-        default: Any | None = None,
-    ):
-        return super().get(n, default)
-
-
-ss = cast(SessionState, ss)
-
-# %%          FUNCTIONS CALLBACK
-############# FUNCTIONS CALLBACK #######################################################
-
-
-# %%          INITIAL DATA
-############# INITIAL DATA #############################################################
-
-injection_layer_df = DataFrame(
-    {
-        "parameter": [
-            "Initial lateral stress multiplier - Ko [-]",
-            "Active lateral stress multiplier - Ka [-]",
-            "Biot coefficient - α [-]",
-            "Fault cohesion - c [MPa]",
-            "Fault friction angle - ϕ [°]",
-            "Fault inclination angle - θ [°]",
-        ],
-        "distr": ["Normal", "Normal", "Normal", "Normal", "Normal", "Normal"],
-        "average": [0.25, 1.00, 0.50, 2, 30.0, 25.0],
-        "stddevi": [0.05, 0.10, 0.10, 0.1, 5, 5],
-        "minimum": [0.05, 0.05, 0.10, 1, 5, 10],
-        "maximum": [0.70, 1.70, 1.00, 5, 50, 45],
-    },
+from dataframes import (
+    column_config_injection_layer_df,
+    column_config_layers_df,
+    injection_layer_df,
+    layers_df,
 )
-
-layers_df = DataFrame(
-    {
-        "layer": [
-            "First layer name",
-            "Second layer name",
-            "Third layer name",
-            "Fourth layer name",
-            "Fifth layer name",
-        ],
-        "depth": [100, 200, 800, 1800, 2000],
-        "distr": ["Normal", "Normal", "Normal", "Normal", "Normal"],
-        "average": [24, 25, 23, 25, 25],
-        "stddevi": [2, 2, 2, 2, 2],
-        "minimum": [20, 20, 20, 20, 20],
-        "maximum": [27, 27, 27, 27, 27],
-    },
-)
-
-column_config_injection_layer_df = {
-    "layer": st.column_config.Column(label="Parameter"),
-    "distr": st.column_config.SelectboxColumn(
-        label="Distribution", options=["Normal", "Triangular", "Uniform"]
-    ),
-    "average": st.column_config.NumberColumn(
-        label="Mean value",
-        format="%.2f",
-        min_value=0,
-        step=0.01,
-    ),
-    "stddevi": st.column_config.NumberColumn(
-        label="Standard deviation", min_value=0.00, format="%.2f"
-    ),
-    "minimum": st.column_config.NumberColumn(
-        label="Minimum value", min_value=0.00, format="%.2f"
-    ),
-    "maximum": st.column_config.NumberColumn(
-        label="Maximum value", min_value=0.00, format="%.2f"
-    ),
-}
-
-column_config_layers_df = {
-    "layer": st.column_config.Column(label="Layer name"),
-    "depth": st.column_config.NumberColumn(
-        label="Layer bottom depth [m]", min_value=0.00, format="%.2f"
-    ),
-    "distr": st.column_config.SelectboxColumn(
-        label="Distribution", options=["Normal", "Triangular", "Uniform"]
-    ),
-    "average": st.column_config.NumberColumn(
-        label="Mean value",
-        format="%.2f",
-        min_value=0,
-        step=0.01,
-    ),
-    "stddevi": st.column_config.NumberColumn(
-        label="Standard deviation", min_value=0.00, format="%.2f"
-    ),
-    "minimum": st.column_config.NumberColumn(
-        label="Minimum value", min_value=0.00, format="%.2f"
-    ),
-    "maximum": st.column_config.NumberColumn(
-        label="Maximum value", min_value=0.00, format="%.2f"
-    ),
-}
 
 # %%          MAIN FUNCTION
 ############# MAIN FUNCTION ############################################################
@@ -372,7 +140,6 @@ def main():
     """,
         unsafe_allow_html=True,
     )
-    global fig
 
     if ss.get("run_calcs") is None:
         ss.run_calcs = True
@@ -464,8 +231,6 @@ def main():
     inj_top = ss.inj_top
     inj_bas = ss.inj_bas
 
-    fig = ss.figure_tab2 or fig
-
     ####################################################################################
     # %           GETTING PARAMETERS
     ####################################################################################
@@ -530,7 +295,7 @@ def main():
 
     dP /= 1000
 
-    camada = VERTICAL_DIVISIONS - ss.layer_slider_value
+    layer = VERTICAL_DIVISIONS - ss.layer_slider_value
     dP_slider = ss.dP_slider_value
 
     # dP_slider *= 1000
@@ -539,234 +304,34 @@ def main():
     ####################################################################################
     # %           BUILD FIGURE
     ####################################################################################
+    f = DeterministicAnalisisFigure(z)
+    f.update_stress_axes(max_depth)
 
-    for i in range(3):
-        fig.update_xaxes(
-            row=1,
-            col=i + 1,
-            matches="x",
-            title_text=f"Principal stresses and pore pressure [MPa]",
-            **axeskwargs,
-        )
-        fig.update_yaxes(
-            row=1,
-            col=i + 1,
-            matches="y",
-            range=[max_depth, 0],
-            **(axeskwargs | {"showticklabels": False}),
-        )
-    fig.update_yaxes(
-        row=1,
-        col=1,
-        matches="y",
-        title_text="Depth [m]",
-        showticklabels=True,
-        title_standoff=2,
-    )
+    f.add_stress_curve(SvTotal, "red", "σ<sub>v</sub> Total")
+    f.add_stress_curve(SvEff[:, dPstep], "brown", "σ'<sub>v</sub> Effective")
+    f.add_stress_curve(ShTotal[:, dPstep], "green", "σ<sub>h</sub> Total")
+    f.add_stress_curve(ShEff[:, dPstep], "cornflowerblue", "σ'<sub>h</sub> Effective")
+    f.add_stress_curve(Pp[:, dPstep], "blue", "ΔP")
 
-    # ----------------
-    row, col = 1, 1
+    f.update_fault_stress_axes(np.max(list(map(np.max, [Tn, Ts, Sn]))))
+    f.add_fault_stress_curve(Sn[:, dPstep], "black", "σ<sub>n</sub> Normal")
+    f.add_fault_stress_curve(Tn[:, dPstep], "magenta", "𝜏<sub>n</sub> Shear")
+    f.add_fault_stress_curve(Ts[:, dPstep], "chocolate", "𝜏<sub>s</sub> Limit")
 
-    SvTotal_name = "σ<sub>v</sub> Total"
-    SvEff_name = "σ'<sub>v</sub> Effective"
-    ShTotal_name = "σ<sub>h</sub> Total"
-    ShEff_name = "σ'<sub>h</sub> Effective"
-    Pp_name = "ΔP"
-
-    plot(row, col, y=z, x=SvTotal, name=SvTotal_name, color="red", figure=fig)
-    plot(
-        row,
-        col,
-        y=z,
-        x=SvEff[:, dPstep],
-        name=SvEff_name,
-        color="brown",
-        figure=fig,
-    )
-    plot(
-        row,
-        col,
-        y=z,
-        x=ShTotal[:, dPstep],
-        name=ShTotal_name,
-        color="green",
-        figure=fig,
-    )
-    plot(
-        row,
-        col,
-        y=z,
-        x=ShEff[:, dPstep],
-        name=ShEff_name,
-        color="cornflowerblue",
-        figure=fig,
-    )
-    plot(row, col, y=z, x=Pp[:, dPstep], name=Pp_name, color="blue", figure=fig)
-    for d in depths:
-        line(row, col, d, horizontal=True, figure=fig)
-
-    # ----------------
-    row, col = 1, 2
-    fig.update_xaxes(
-        row=row,
-        col=col,
-        matches="x2",
-        title_text="Stresses on fault [MPa]",
-        showticklabels=True,
-        range=[0, np.max(list(map(np.max, [Tn, Ts, Sn])))],
-    )
-
-    Sn_name = "σ<sub>n</sub> Normal"
-    Tn_name = "𝜏<sub>n</sub> Shear"
-    Ts_name = "𝜏<sub>s</sub> Limit"
-
-    plot(row, col, y=z, x=Sn[:, dPstep], name=Sn_name, color="black", figure=fig)
-    plot(row, col, y=z, x=Tn[:, dPstep], name=Tn_name, color="magenta", figure=fig)
-    plot(row, col, y=z, x=Ts[:, dPstep], name=Ts_name, color="chocolate", figure=fig)
-    for d in depths:
-        line(row, col, d, horizontal=True, figure=fig)
-
-    # ----------------
-    row, col = 1, 3
-    fig.update_xaxes(
-        row=row,
-        col=col,
-        matches="x3",
-        title_text="Security Factor (SF)",
-        range=[0, np.max(FSres)],
-        **axeskwargs,
-    )
-    plot(
-        row,
-        col,
-        y=z,
-        x=FSres[:, dPstep],
-        name="SF",
-        color="black",
-        showlegend=False,
-        figure=fig,
-    )
-
-    line(row, col, 1.0, horizontal=False, figure=fig)
-
-    # ----------------
-    row, col = 1, 4
+    f.update_FS_axes(np.max(FSres))
+    f.add_FS_curve(FSres[:, dPstep], "black", "SF")
+    f.add_FS_hline(1.0)
     Smax = np.max(Sn)
     Tmax = coh + Smax * np.tan(phi)
-    fig.update_xaxes(
-        row=row,
-        col=col,
-        range=[0, Smax],
-        title_text=f"σ<sub>n</sub> - Normal stress [MPa]",
-        **axeskwargs,
-    )
-    fig.update_yaxes(
-        row=row,
-        col=col,
-        range=[0, Tmax],
-        title_text=f"𝜏<sub>n</sub> - Shear stress [MPa]",
-        side="right",
-        **axeskwargs,
-    )
-    plot(
-        row,
-        col,
-        [0, Smax],
-        [coh, Tmax],
-        "Evelope",
-        showlegend=False,
-        color="red",
-        figure=fig,
-    )
-    plot_mohr_circle(
-        fig,
-        SvEff[camada, dPstep],
-        ShEff[camada, dPstep],
-        color="green",
-        angle=np.degrees(theta),
-    )
 
-    # ----------------
-    row, col = 2, 4
-    fig.update_xaxes(
-        row=row,
-        col=col,
-        title_text=f"Pressure variation - ΔP [MPa]",
-        range=[dP.min(), dP.max()],
-        **axeskwargs,
-    )
-    fig.update_yaxes(
-        row=row,
-        col=col,
-        title_text=f"Injection layer depth [m]",
-        side="right",
-        range=[z[inj_pos][-1], z[inj_pos][0]],
-        **axeskwargs,
-    )
-    contour = Contour(
-        x=dP,
-        y=z[inj_pos],
-        z=FSdet,
-        colorscale="Turbo",
-        ncontours=20,
-        contours=dict(
-            coloring="fill",
-            showlines=False,
-        ),
-        colorbar=dict(
-            x=1.05,
-            y=0.23,
-            len=0.5,
-            title=dict(text="Safety Factor (SF)", side="right"),
-        ),
-        name="SF map",
-        showlegend=False,
-    )
+    f.update_mohr_coulomb_axes(Smax, Tmax)
+    f.plot_mohr_envelope(coh)
+    f.plot_mohr_circle(SvEff[layer, dPstep], ShEff[layer, dPstep], np.degrees(theta))
 
-    contour_line = Contour(
-        x=dP,
-        y=z[inj_pos],
-        z=FSdet,
-        contours=dict(
-            start=1.0,
-            end=1.0,
-            size=0.001,
-            coloring="none",
-            showlabels=True,
-            labelformat=".1f",
-            labelfont=dict(size=16, color="black"),
-        ),
-        line=dict(color="black", width=2),
-        showscale=False,
-        coloraxis=None,
-        colorscale=None,
-        name="SF map",
-        showlegend=False,
-    )
-
-    X, Y = np.meshgrid(dP, z[inj_pos][0 : -1 : int(len(z[inj_pos]) / 50)])
-    mesh = Scatter(
-        x=X.flatten(),
-        y=Y.flatten(),
-        mode="markers",
-        marker=dict(size=5, color="rgba(0,0,0,0)"),
-        visible=True,
-        showlegend=False,
-        name="ΔP vs z",
-    )
-
-    fig.add_trace(contour, row=row, col=col)
-    fig.add_trace(contour_line, row=row, col=col)
-    fig.add_trace(mesh, row=row, col=col)
-
-    fig = fig.update_layout(
-        template="simple_white",
-        plot_bgcolor="white",
-        height=640,
-        margin=dict(l=50, r=40, t=30, b=0),
-        showlegend=True,
-        dragmode="zoom",
-    )
+    f.add_hlines_stress_curve(depths)
+    f.update_contour_axes(dP.min(), dP.max(), z[inj_pos][-1], z[inj_pos][0])
+    f.add_contours(x=dP, y=z[inj_pos], z=FSdet)
+    f.update_layout()
 
     # ss.figure_tab2 = fig
 
@@ -774,22 +339,13 @@ def main():
     # %
     ####################################################################################
 
-    figure = fig  # Figure(ss.figure_tab2)
+    figure = f.fig  # Figure(ss.figure_tab2)
 
     dP_slider_container = tab2.container()
     cols = tab2.columns([1, 35])
     layer_slider_container = cols[0].container()
 
-    line(1, 1, z[camada], horizontal=True, line_dash="dash", figure=figure)
-    line(1, 2, z[camada], horizontal=True, line_dash="dash", figure=figure)
-    line(1, 3, z[camada], horizontal=True, line_dash="dash", figure=figure)
-    line(2, 4, z[camada], horizontal=True, figure=figure)
-    line(2, 4, dP[dPstep], horizontal=False, figure=figure)
-    plot(
-        2, 4, [dP[dPstep]], [z[camada]], name="Current", showlegend=False, figure=figure
-    )
-
-    # ss.figure_tab2
+    f.update_current_point(dP[dPstep], z[layer])
 
     event = cols[1].plotly_chart(
         figure, theme=None, on_select="rerun", selection_mode="points"
