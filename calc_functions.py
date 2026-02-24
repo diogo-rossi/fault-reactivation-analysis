@@ -5,12 +5,12 @@ from scipy.stats import truncnorm
 
 
 def FS(
+    inj_id: int,
+    dPo: float,
+    gammaW: float,
     dP: float,
     z: float,
-    dPo: float,
-    inj_id: int,
     alpha: float,
-    gammaW: float,
     Ko: float,
     Ka: float,
     theta: float,
@@ -19,11 +19,13 @@ def FS(
     *gamma_thickness: tuple[float, float],
 ):
     gammas, thickness = zip(*gamma_thickness)
-    gammas = np.array(gammas)
-    thickness = np.array(thickness)
+    gammas = np.array(gammas)[:inj_id]
+    thickness = np.broadcast_to(
+        np.array(thickness)[:inj_id][:, None, None, None], gammas.shape
+    )
     SvEff0 = (
-        (gammas[:inj_id] * thickness[:inj_id]).sum()
-        + gammas[inj_id](z - thickness[:inj_id].sum())
+        (gammas * thickness).sum()
+        + gammas[-1] * (z - thickness.sum())
         - alpha * (gammaW * z + dPo)
     )
     SvEff = SvEff0 - alpha * dP
@@ -49,4 +51,4 @@ def dist(
     elif distribution_choice == "Triangular":
         return np.random.triangular(lower_value, mean, upper_value, number_of_values)
     elif distribution_choice == "Normal":
-        return truncnorm.rvs(a, b, mean, std_dev, number_of_values)
+        return np.array(truncnorm.rvs(a, b, mean, std_dev, number_of_values))
