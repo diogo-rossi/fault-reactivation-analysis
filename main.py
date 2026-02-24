@@ -308,7 +308,7 @@ def main():
 
         _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
 
-        z_inj = z[inj_pos]
+        z_inj = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 101)
         _z, _dP, _alpha = np.meshgrid(z_inj, dP, _alpha)
         _, _, _Ko = np.meshgrid(z_inj, dP, _Ko)
         _, _, _Ka = np.meshgrid(z_inj, dP, _Ka)
