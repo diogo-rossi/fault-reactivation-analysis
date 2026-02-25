@@ -35,9 +35,37 @@ class ProbabilisticAnalisisFigure:
         self.rows = [1, 1, 1, 2, 2, 2, 1]
         self.cols = [1, 2, 3, 1, 2, 3, 4]
 
-    def update_figure(self, i, data, hist, xbins=None, nbins=None):
-        nbins = nbins or self.num_bins
-        rangex = [xbins["start"], xbins["end"]] if xbins else None
+    def add_SF_hist(self, hist):
+        name = "Security Factor - SF"
+        row, col = 1, 4
+        max_value = float(int(min([hist.max(), 10])))
+        print(max_value)
+        self.fig.update_yaxes(
+            row=row,
+            col=col,
+            title_text=f"Frequency",
+            **axeskwargs,
+        )
+        self.fig.update_xaxes(
+            row=row,
+            col=col,
+            title_text=name,
+            range=[0.0, max_value],
+            **axeskwargs,
+        )
+        self.fig.add_trace(
+            Histogram(
+                x=hist,
+                nbinsx=self.num_bins,
+                name=name,
+                marker=dict(line=dict(width=0)),
+                xbins=dict(start=0, end=max_value, size=max_value / self.num_bins),
+            ),
+            row=row,
+            col=col,
+        )
+
+    def add_var_hist(self, i, data, hist):
         self.fig.update_yaxes(
             row=self.rows[i],
             col=self.cols[i],
@@ -48,7 +76,6 @@ class ProbabilisticAnalisisFigure:
             row=self.rows[i],
             col=self.cols[i],
             title_text=data[0],
-            range=rangex,
             **axeskwargs,
         )
         self.fig.add_trace(
@@ -57,7 +84,6 @@ class ProbabilisticAnalisisFigure:
                 nbinsx=self.num_bins,
                 name=data[0],
                 marker=dict(line=dict(width=0)),
-                xbins=xbins,
             ),
             row=self.rows[i],
             col=self.cols[i],
