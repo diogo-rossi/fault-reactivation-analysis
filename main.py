@@ -288,9 +288,7 @@ def main():
 
             data = final_injection_layer_df.iloc[i].to_list()
             hist_data.append(dist(Nrel, *data[1:]))
-            f.update_figure(i, data, hist_data[-1])
-
-        f.update_layout()
+            f.add_var_hist(i, data, hist_data[-1])
 
         ss.fig3 = f
 
@@ -338,14 +336,10 @@ def main():
             *gamma_thickness,  # MPa/m , m
         )
 
-        f.update_figure(
-            6,
-            [0, 0, 0, 0, 0, 0, 0],
-            FSS[len(dP) // 2, len(z_inj) // 2, :],
-            nbins=nbins,
-            xbins=dict(start=0, end=10, size=10.0 / nbins),
-        )
+        f.add_SF_hist(FSS[len(dP) // 2, len(z_inj) // 2, :])
         ss.run_calcs = False
+
+        f.update_layout()
 
         print("Shape of the FS map", FSS.shape)
         print("Max value", FSS.max())
