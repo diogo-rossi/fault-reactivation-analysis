@@ -37,6 +37,7 @@ class ProbabilisticAnalisisFigure:
 
     def update_figure(self, i, data, hist, xbins=None, nbins=None):
         nbins = nbins or self.num_bins
+        rangex = [xbins["start"], xbins["end"]] if xbins else None
         self.fig.update_yaxes(
             row=self.rows[i],
             col=self.cols[i],
@@ -47,6 +48,7 @@ class ProbabilisticAnalisisFigure:
             row=self.rows[i],
             col=self.cols[i],
             title_text=data[0],
+            range=rangex,
             **axeskwargs,
         )
         self.fig.add_trace(
