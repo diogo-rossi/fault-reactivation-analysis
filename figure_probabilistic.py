@@ -35,7 +35,7 @@ class ProbabilisticAnalisisFigure:
         self.rows = [1, 1, 1, 2, 2, 2, 1]
         self.cols = [1, 2, 3, 1, 2, 3, 4]
 
-    def add_SF_hist(self, hist):
+    def add_SF_hist(self, hist: NDArray[float64]):
         name = "Security Factor - SF"
         row, col = 1, 4
         max_value = float(int(min([hist.max(), 10])))
