@@ -102,7 +102,6 @@ class ProbabilisticAnalisisFigure:
                 x=hist,
                 nbinsx=self.num_bins,
                 name=data[0],
-                marker=dict(line=dict(width=0)),
             ),
             row=self.rows[i],
             col=self.cols[i],
@@ -130,7 +129,9 @@ class ProbabilisticAnalisisFigure:
         self.fig.update_layout(
             template="simple_white",
             plot_bgcolor="white",
+            barmode="overlay",
             height=650,
             margin=dict(l=50, r=40, t=30, b=0),
             showlegend=True,
         )
+        self.fig.update_traces(marker_line_width=0, selector=dict(type="histogram"))
