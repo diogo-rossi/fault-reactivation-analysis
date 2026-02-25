@@ -341,7 +341,7 @@ def main():
         f.update_figure(
             6,
             [0, 0, 0, 0, 0, 0, 0],
-            FSS[len(dP) // 2, len(z_inj // 2), :],
+            FSS[len(dP) // 2, len(z_inj) // 2, :],
             nbins=nbins,
             xbins=dict(start=0, end=10, size=10.0 / nbins),
         )
