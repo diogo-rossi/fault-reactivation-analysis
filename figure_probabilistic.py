@@ -39,6 +39,9 @@ class ProbabilisticAnalisisFigure:
         name = "Security Factor - SF"
         row, col = 1, 4
         max_value = float(int(min([hist.max(), 10])))
+        data_low = hist[hist <= 1.0]
+        data_high = hist[hist > 1.0]
+        xbins = dict(start=0, end=max_value, size=max_value / self.num_bins)
         print(max_value)
         self.fig.update_yaxes(
             row=row,
@@ -55,14 +58,30 @@ class ProbabilisticAnalisisFigure:
         )
         self.fig.add_trace(
             Histogram(
-                x=hist,
-                nbinsx=self.num_bins,
-                name=name,
-                marker=dict(line=dict(width=0)),
-                xbins=dict(start=0, end=max_value, size=max_value / self.num_bins),
+                x=data_low,
+                name="SF<1",
+                xbins=xbins,
             ),
             row=row,
             col=col,
+        )
+        self.fig.add_trace(
+            Histogram(
+                name="SF>1",
+                x=data_high,
+                xbins=xbins,
+            ),
+            row=row,
+            col=col,
+        )
+        self.fig.add_vline(
+            row=row,
+            col=col,
+            x=1.0,
+            line_width=3,
+            line_dash="dash",
+            line_color="red",
+            opacity=1,
         )
 
     def add_var_hist(self, i, data, hist):
