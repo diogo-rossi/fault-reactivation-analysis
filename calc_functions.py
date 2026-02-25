@@ -1,6 +1,8 @@
 from typing import Literal
 
 import numpy as np
+from numpy import float64
+from numpy.typing import NDArray
 from scipy.stats import truncnorm
 
 
@@ -17,7 +19,7 @@ def FS(
     phi: float,
     c: float,
     *gamma_thickness: tuple[float, float],
-):
+) -> NDArray[float64]:
     gammas, thickness = zip(*gamma_thickness)
     gammas = np.array(gammas)[:inj_id]
     thickness = np.broadcast_to(
