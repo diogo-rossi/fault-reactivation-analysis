@@ -299,7 +299,7 @@ def main():
         ):
             _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g)
 
-        print("Getting SF map")
+        print("---- Getting meshgrid for theta")
         SFs = SF(
             inj_id=inj_layer_pos,
             dPo=dPini,
@@ -322,6 +322,7 @@ def main():
         ss.SFs = SFs
         ss.fig3 = copy.deepcopy(f)
         ss.run_calcs = False
+        print("-" * COLUMNS)
 
     z_inj_layer_idx = np.searchsorted(z_inj, z[layer])
     f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])

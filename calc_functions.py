@@ -4,6 +4,7 @@ import numpy as np
 from numpy import float64
 from numpy.typing import NDArray
 from scipy.stats import truncnorm
+from tqdm import tqdm
 
 
 def SF(
@@ -22,13 +23,18 @@ def SF(
     thickness: list[float],
 ) -> NDArray[float64]:
     SvEff0 = np.zeros(gamma[0].shape)
-    for g, h in zip(gamma[:inj_id], thickness[:inj_id]):
+    for g, h in tqdm(
+        tuple(zip(gamma[:inj_id], thickness[:inj_id])), desc="Calc. layers"
+    ):
         SvEff0 += g * h
     SvEff0 += gamma[-1] * (z - np.array(thickness[:inj_id]).sum()) - alpha * (
         gammaW * z + dPo
     )
+    print("-------- Calculating Vertical effective stress")
     SvEff = SvEff0 - alpha * dP
+    print("-------- Calculating Horizontal effective stress")
     ShEff = Ko * SvEff0 - Ka * alpha * dP
+    print("-------- Calculating Security Factor map")
     return (
         c + (ShEff * (np.cos(theta) ** 2) + SvEff * (np.sin(theta) ** 2)) * np.tan(phi)
     ) / ((SvEff - ShEff) * np.sin(theta) * np.cos(theta))
