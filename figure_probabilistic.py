@@ -135,3 +135,74 @@ class ProbabilisticAnalisisFigure:
             showlegend=True,
         )
         self.fig.update_traces(marker_line_width=0, selector=dict(type="histogram"))
+
+    def update_contour_axes(self, dPmin, dPmax, zmin, zmax):
+        self.fig.update_xaxes(
+            row=2,
+            col=4,
+            title_text=f"Pressure variation - ΔP [MPa]",
+            range=[dPmin, dPmax],
+            **axeskwargs,
+        )
+        self.fig.update_yaxes(
+            row=2,
+            col=4,
+            title_text=f"Injection layer depth [m]",
+            side="right",
+            range=[zmin, zmax],
+            **axeskwargs,
+        )
+
+    def add_contours(self, x, y, z):
+        contour = Contour(
+            x=x,
+            y=y,
+            z=z,
+            colorscale="Turbo",
+            ncontours=20,
+            contours=dict(
+                coloring="fill",
+                showlines=False,
+            ),
+            colorbar=dict(
+                x=1.05,
+                y=0.23,
+                len=0.5,
+                title=dict(text="Safety Factor (SF)", side="right"),
+            ),
+            name="SF map",
+            showlegend=False,
+        )
+        # contour_line = Contour(
+        #     x=x,
+        #     y=y,
+        #     z=z,
+        #     contours=dict(
+        #         start=1.0,
+        #         end=1.0,
+        #         size=0.001,
+        #         coloring="none",
+        #         showlabels=True,
+        #         labelformat=".1f",
+        #         labelfont=dict(size=16, color="black"),
+        #     ),
+        #     line=dict(color="black", width=2),
+        #     showscale=False,
+        #     coloraxis=None,
+        #     colorscale=None,
+        #     name="SF map",
+        #     showlegend=False,
+        # )
+        # X, Y = np.meshgrid(x, y[0 : -1 : int(len(y) / 50)])
+        # mesh = Scatter(
+        #     x=X.flatten(),
+        #     y=Y.flatten(),
+        #     mode="markers",
+        #     marker=dict(size=5, color="rgba(0,0,0,0)"),
+        #     visible=True,
+        #     showlegend=False,
+        #     name="ΔP vs z",
+        # )
+        self.fig.add_trace(contour, row=2, col=4)
+        # self.fig.add_trace(contour_line, row=2, col=4)
+        # self.fig.add_trace(mesh, row=2, col=4)
