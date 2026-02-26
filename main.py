@@ -32,7 +32,7 @@ gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
 def main():
     import streamlit as st
 
-    from column_configs import column_config_injection_layer_df, column_config_layers_df
+    from column_configs import col_conf_injection_layer, col_conf_layers
     from session_state import ss
 
     st.set_page_config(layout="wide")
@@ -87,7 +87,7 @@ def main():
     final_injection_layer_df = InjectionLayerTable(
         tab1.data_editor(
             injection_layer_df,
-            column_config=column_config_injection_layer_df,
+            column_config=col_conf_injection_layer,
             hide_index=True,
         )
     )
@@ -96,7 +96,7 @@ def main():
     final_layers_df = LayerTable(
         tab1.data_editor(
             layers_df,
-            column_config=column_config_layers_df,
+            column_config=col_conf_layers,
             hide_index=True,
             num_rows="dynamic",
         )

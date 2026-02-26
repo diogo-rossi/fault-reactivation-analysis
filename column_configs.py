@@ -1,6 +1,6 @@
 import streamlit as st
 
-column_config_injection_layer_df = {
+col_conf_injection_layer = {
     "layer": st.column_config.Column(label="Parameter"),
     "distr": st.column_config.SelectboxColumn(
         label="Distribution", options=["Normal", "Triangular", "Uniform"]
@@ -22,7 +22,7 @@ column_config_injection_layer_df = {
     ),
 }
 
-column_config_layers_df = {
+col_conf_layers = {
     "layer": st.column_config.Column(label="Layer name"),
     "depth": st.column_config.NumberColumn(
         label="Layer bottom depth [m]", min_value=0.00, format="%.2f"
