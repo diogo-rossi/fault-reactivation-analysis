@@ -160,7 +160,7 @@ class DeterministicAnalisisFigure:
     def add_hlines_stress_curve(self, values: Any, **kwargs):
         for v in values:
             for i in [1, 2, 3]:
-                self.fig.add_hline(v, 1, i, line_color="black", line_width=2, **kwargs)
+                self.fig.add_hline(v, 1, i, line_color="black", line_width=2, **kwargs)  # type: ignore
 
     def plot_mohr_envelope(self, coh: float):
         self.plot(1, 4, [0, self.Smax], [coh, self.Tmax], "Envelope", "red", 1, False)

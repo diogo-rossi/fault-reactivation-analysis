@@ -42,7 +42,6 @@ class ProbabilisticAnalisisFigure:
         data_low = hist[hist <= 1.0]
         data_high = hist[hist > 1.0]
         xbins = dict(start=0, end=max_value, size=max_value / self.num_bins)
-        print(max_value)
         self.fig.update_yaxes(
             row=row,
             col=col,
@@ -75,8 +74,8 @@ class ProbabilisticAnalisisFigure:
             col=col,
         )
         self.fig.add_vline(
-            row=row,
-            col=col,
+            row=row,  # type: ignore
+            col=col,  # type: ignore
             x=1.0,
             line_width=3,
             line_dash="dash",
