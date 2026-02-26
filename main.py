@@ -309,25 +309,25 @@ def main():
 
         _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
 
-        z_inj = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 101)
+        z_inj: NDArray[float64] = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 51)
         print("Getting meshgrid for alpha")
-        _z, _dP, _alpha = np.meshgrid(z_inj, dP, _alpha)
+        _dP, _z, _alpha = np.meshgrid(dP, z_inj, _alpha)
         print("Getting meshgrid for Ko")
-        _, _, _Ko = np.meshgrid(z_inj, dP, _Ko)
+        _, _, _Ko = np.meshgrid(dP, z_inj, _Ko)
         print("Getting meshgrid for Ka")
-        _, _, _Ka = np.meshgrid(z_inj, dP, _Ka)
+        _, _, _Ka = np.meshgrid(dP, z_inj, _Ka)
         print("Getting meshgrid for cohesion")
-        _, _, _cohesion = np.meshgrid(z_inj, dP, _cohesion)
+        _, _, _cohesion = np.meshgrid(dP, z_inj, _cohesion)
         print("Getting meshgrid for friction")
-        _, _, _friction = np.meshgrid(z_inj, dP, _friction)
+        _, _, _friction = np.meshgrid(dP, z_inj, _friction)
         print("Getting meshgrid for theta")
-        _, _, _angtheta = np.meshgrid(z_inj, dP, _angtheta)
+        _, _, _angtheta = np.meshgrid(dP, z_inj, _angtheta)
 
         for i, g in enumerate(
             tqdm(gamma_data, ncols=COLUMNS, desc="Getting meshgrid for gamma in layers")
         ):
+            _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g / 1000)
         # g: [kPa/m] -> [MPa/m]
-        gamma_thickness = tuple(zip(gamma_data, thickness))
 
         print("Getting FS map")
         FSS = FS(
