@@ -128,7 +128,7 @@ def main():
     ####################################################################################
 
     depths: np.ndarray = final_layers_df.depth.to_numpy()
-    thickness: np.ndarray = np.diff(np.insert(depths, 0, 0))
+    thickness: list[float] = list(np.diff(np.insert(depths, 0, 0)))
     depths = np.insert(depths, 0, 0)
     max_depth = depths.max()
     z = np.linspace(0, max_depth, VERTICAL_DIVISIONS)
