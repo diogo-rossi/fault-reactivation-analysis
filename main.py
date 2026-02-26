@@ -242,13 +242,98 @@ def main():
 
     f.update_current_point(dP[dPstep], z[layer])
 
-    event = cols[1].plotly_chart(
-        f.fig, theme=None, on_select="rerun", selection_mode="points"
-    )
-    if event and event["selection"] and event["selection"]["points"]:
-        ss.dP_slider_value = event["selection"]["points"][0]["x"]
+    event2 = cols[1].plotly_chart(f.fig, **plotly_chart_options)
+    if event2 and event2["selection"] and event2["selection"]["points"]:
+        print(event2)
+        ss.dP_slider_value = event2["selection"]["points"][0]["x"]
         ss.layer_slider_value = VERTICAL_DIVISIONS - np.searchsorted(
-            z, event["selection"]["points"][0]["y"]
+            z, event2["selection"]["points"][0]["y"]
+        )
+        st.rerun()
+
+    ####################################################################################
+    # %           GRAPHS ON THIRD TAB
+    ####################################################################################
+
+    cols = tab3.columns([6, 1, 4])
+    cols[0].header("Histogram distribution of the injection layer parameters")
+    nbins = cols[1].number_input("Number of bins", value=100, on_change=set_run_calcs)
+    ss.bins = nbins
+    cols[2].header("Analisis results")
+
+    z_inj: NDArray[float64] = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 51)
+
+    f = copy.deepcopy(ss.fig3)
+    if f is None or ss.run_calcs:
+
+        f = ProbabilisticAnalisisFigure(Nrel, nbins)
+
+        hist_data = []
+        for i in final_injection_layer_df.index:
+            data = final_injection_layer_df.iloc[i].to_list()
+            hist_data.append(dist(Nrel, *data[1:]))
+            f.add_var_hist(i, data, hist_data[-1])
+
+        _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
+        print("---- Getting meshgrid for alpha")
+        _dP, _z, _alpha = np.meshgrid(dP, z_inj, _alpha)
+        print("---- Getting meshgrid for Ko")
+        _, _, _Ko = np.meshgrid(dP, z_inj, _Ko)
+        print("---- Getting meshgrid for Ka")
+        _, _, _Ka = np.meshgrid(dP, z_inj, _Ka)
+        print("---- Getting meshgrid for cohesion")
+        _, _, _cohesion = np.meshgrid(dP, z_inj, _cohesion)
+        print("---- Getting meshgrid for friction")
+        _, _, _friction = np.meshgrid(dP, z_inj, _friction)
+        print("---- Getting meshgrid for theta")
+        _, _, _angtheta = np.meshgrid(dP, z_inj, _angtheta)
+
+        gamma_data: list[NDArray[float64]] = []
+        for i in final_layers_df.index:
+            data = final_layers_df.iloc[i].to_list()
+            gamma_data.append(dist(Nrel, *data[2:]))
+
+        for i, g in enumerate(
+            tqdm(gamma_data, ncols=COLUMNS, desc="Getting meshgrid for gamma in layers")
+        ):
+            _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g)
+
+        print("Getting FS map")
+        SFs = FS(
+            inj_layer_pos,
+            dPini,
+            gamaW,
+            _dP * 1000,  # MPa -> kPa
+            _z,
+            _alpha,
+            _Ko,
+            _Ka,
+            np.radians(_angtheta),
+            np.radians(_friction),
+            _cohesion * 1000,  # MPa -> kPa
+            gamma_data,
+            thickness,
+        )
+
+        fp: NDArray[float64] = ((SFs < 1).astype(int).sum(axis=2) / Nrel) * 100.0
+        f.update_contour_axes(dP.min(), dP.max(), z_inj[-1], z_inj[0])
+        f.add_contours(dP, z_inj, fp)
+        ss.SFs = SFs
+        ss.fig3 = copy.deepcopy(f)
+        ss.run_calcs = False
+
+    z_inj_layer_idx = layer if 0 <= layer < len(z_inj) else 0
+    f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])
+    assert ss.SFs is not None
+    f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :])
+    f.update_layout()
+
+    event3 = tab3.plotly_chart(f.fig, **plotly_chart_options)
+
+    if event3 and event3["selection"] and event3["selection"]["points"]:
+        ss.dP_slider_value = event3["selection"]["points"][0]["x"]
+        ss.layer_slider_value = VERTICAL_DIVISIONS - np.searchsorted(
+            z, event3["selection"]["points"][0]["y"]
         )
         st.rerun()
 
@@ -278,88 +363,6 @@ def main():
         if slider_value != ss.layer_slider_value:
             ss.layer_slider_value = slider_value
             st.rerun()
-
-    ####################################################################################
-    # %           GRAPHS ON THIRD TAB
-    ####################################################################################
-
-    cols = tab3.columns([6, 1, 4])
-    cols[0].header("Histogram distribution of the injection layer parameters")
-    nbins = cols[1].number_input("Number of bins", value=100, on_change=set_run_calcs)
-    ss.bins = nbins
-    cols[2].header("Analisis results")
-
-    if ss.run_calcs:
-
-        f = ProbabilisticAnalisisFigure(Nrel, nbins)
-
-        hist_data = []
-
-        for i in final_injection_layer_df.index:
-
-            data = final_injection_layer_df.iloc[i].to_list()
-            hist_data.append(dist(Nrel, *data[1:]))
-            f.add_var_hist(i, data, hist_data[-1])
-
-        ss.fig3 = f
-
-        gamma_data: list[NDArray[float64]] = []
-
-        for i in final_layers_df.index:
-            data = final_layers_df.iloc[i].to_list()
-            gamma_data.append(dist(Nrel, *data[2:]))
-
-        _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
-
-        z_inj: NDArray[float64] = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 51)
-        print("Getting meshgrid for alpha")
-        _dP, _z, _alpha = np.meshgrid(dP, z_inj, _alpha)
-        print("Getting meshgrid for Ko")
-        _, _, _Ko = np.meshgrid(dP, z_inj, _Ko)
-        print("Getting meshgrid for Ka")
-        _, _, _Ka = np.meshgrid(dP, z_inj, _Ka)
-        print("Getting meshgrid for cohesion")
-        _, _, _cohesion = np.meshgrid(dP, z_inj, _cohesion)
-        print("Getting meshgrid for friction")
-        _, _, _friction = np.meshgrid(dP, z_inj, _friction)
-        print("Getting meshgrid for theta")
-        _, _, _angtheta = np.meshgrid(dP, z_inj, _angtheta)
-
-        for i, g in enumerate(
-            tqdm(gamma_data, ncols=COLUMNS, desc="Getting meshgrid for gamma in layers")
-        ):
-            _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g / 1000)
-        # g: [kPa/m] -> [MPa/m]
-
-        print("Getting FS map")
-        FSS = FS(
-            inj_layer_pos,
-            dPini / 1000,  # dPini: [kPa/m] -> [MPa/m]
-            gamaW / 1000,  # gamaW: [kPa/m] -> [MPa/m]
-            _dP,  # MPa
-            _z,
-            _alpha,
-            _Ko,
-            _Ka,
-            np.radians(_angtheta),
-            np.radians(_friction),
-            _cohesion,  # MPa
-            gamma_data,
-            thickness,
-        )
-
-        f.add_SF_hist(FSS[len(dP) // 2, len(z_inj) // 2, :])
-
-        fp: NDArray[float64] = ((FSS < 1).astype(int).sum(axis=2) / Nrel) * 100.0
-        f.update_contour_axes(dP.min(), dP.max(), z_inj[-1], z_inj[0])
-        f.add_contours(dP, z_inj, fp)
-
-        ss.run_calcs = False
-
-        f.update_layout()
-
-    if ss.fig3 is not None:
-        tab3.plotly_chart(ss.fig3.fig, theme=None)
 
 
 if __name__ == "__main__":
