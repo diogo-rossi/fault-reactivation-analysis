@@ -322,7 +322,7 @@ def main():
         ss.fig3 = copy.deepcopy(f)
         ss.run_calcs = False
 
-    z_inj_layer_idx = layer if 0 <= layer < len(z_inj) else 0
+    z_inj_layer_idx = np.searchsorted(z_inj, z[layer])
     f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])
     assert ss.SFs is not None
     f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :])
