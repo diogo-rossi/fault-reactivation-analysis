@@ -56,20 +56,12 @@ class ProbabilisticAnalisisFigure:
             **axeskwargs,
         )
         self.fig.add_trace(
-            Histogram(
-                x=data_low,
-                name="SF<1",
-                xbins=xbins,
-            ),
+            Histogram(x=data_low, name="SF < 1", xbins=xbins, marker_color="salmon"),
             row=row,
             col=col,
         )
         self.fig.add_trace(
-            Histogram(
-                name="SF>1",
-                x=data_high,
-                xbins=xbins,
-            ),
+            Histogram(name="SF > 1", x=data_high, xbins=xbins),
             row=row,
             col=col,
         )
