@@ -274,6 +274,7 @@ def main():
             hist_data.append(dist(Nrel, *data[1:]))
             f.add_var_hist(i, data, hist_data[-1])
 
+        print("-" * COLUMNS)
         _Ko, _Ka, _alpha, _cohesion, _friction, _angtheta = hist_data
         print("---- Getting meshgrid for alpha")
         _dP, _z, _alpha = np.meshgrid(dP, z_inj, _alpha)
