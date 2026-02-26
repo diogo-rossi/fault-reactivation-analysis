@@ -300,19 +300,19 @@ def main():
 
         print("Getting FS map")
         SFs = FS(
-            inj_layer_pos,
-            dPini,
-            gamaW,
-            _dP * 1000,  # MPa -> kPa
-            _z,
-            _alpha,
-            _Ko,
-            _Ka,
-            np.radians(_angtheta),
-            np.radians(_friction),
-            _cohesion * 1000,  # MPa -> kPa
-            gamma_data,
-            thickness,
+            inj_id=inj_layer_pos,
+            dPo=dPini,
+            gammaW=gamaW,
+            dP=_dP * 1000,  # MPa -> kPa
+            z=_z,
+            alpha=_alpha,
+            Ko=_Ko,
+            Ka=_Ka,
+            theta=np.radians(_angtheta),
+            phi=np.radians(_friction),
+            c=_cohesion * 1000,  # MPa -> kPa
+            gamma=gamma_data,
+            thickness=thickness,
         )
 
         fp: NDArray[float64] = ((SFs < 1).astype(int).sum(axis=2) / Nrel) * 100.0
