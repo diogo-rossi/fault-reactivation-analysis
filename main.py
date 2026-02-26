@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import streamlitrunner as sr
 from numpy import float64
@@ -13,6 +15,13 @@ from figure_probabilistic import ProbabilisticAnalisisFigure
 from tables_types import InjectionLayerTable, LayerTable
 
 VERTICAL_DIVISIONS: int = 1000
+
+COLUMNS: int = 100
+try:
+    COLUMNS: int = os.get_terminal_size().columns
+except:
+    pass
+
 
 gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
 
@@ -314,9 +323,9 @@ def main():
         print("Getting meshgrid for theta")
         _, _, _angtheta = np.meshgrid(z_inj, dP, _angtheta)
 
-        for i, g in tqdm(enumerate(gamma_data)):
-            print("Getting meshgrid for gamma in layer", i)
-            _, _, gamma_data[i] = np.meshgrid(z_inj, dP, g / 1000)
+        for i, g in enumerate(
+            tqdm(gamma_data, ncols=COLUMNS, desc="Getting meshgrid for gamma in layers")
+        ):
         # g: [kPa/m] -> [MPa/m]
         gamma_thickness = tuple(zip(gamma_data, thickness))
 
