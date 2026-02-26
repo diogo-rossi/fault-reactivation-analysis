@@ -133,7 +133,7 @@ def main():
     depths = np.insert(depths, 0, 0)
     max_depth = depths.max()
     z = np.linspace(0, max_depth, VERTICAL_DIVISIONS)
-    inj_pos = (inj_top <= z) & (z <= inj_bas)
+    inj_rng = (inj_top <= z) & (z <= inj_bas)
     dz = np.insert(np.diff(z), 0, 0)[:, None]
 
     for i in final_layers_df.index:
@@ -160,21 +160,21 @@ def main():
     Pp = gamaW * z[:, None] * np.ones(numDP)
     FSres = np.zeros(VERTICAL_DIVISIONS)[:, None] * np.ones(numDP)
 
-    Pp[inj_pos, :] = Pp[inj_pos, :] + dPini
+    Pp[inj_rng, :] = Pp[inj_rng, :] + dPini
     for i in range(numDP):
-        Pp[inj_pos, i] = Pp[inj_pos, i] + dP[i]
+        Pp[inj_rng, i] = Pp[inj_rng, i] + dP[i]
 
     SvTotal = np.cumsum(gamma * dz)
     SvEff = SvTotal[:, None] - biot * Pp
     ShEff = Ko * SvEff
     for i in range(1, numDP):
-        ShEff[inj_pos, i] = ShEff[inj_pos, 0] - Ka * biot * dP[i]
+        ShEff[inj_rng, i] = ShEff[inj_rng, 0] - Ka * biot * dP[i]
     ShTotal = ShEff + biot * Pp
     Tn = np.abs(((ShEff - SvEff) / 2) * np.sin(2 * theta))
     Sn = ShEff * (np.cos(theta)) ** 2 + SvEff * (np.sin(theta)) ** 2
     Ts = coh + Sn * np.tan(phi)
-    FSres[inj_pos, :] = Ts[inj_pos, :] / Tn[inj_pos, :]
-    FSdet = FSres[inj_pos, :]
+    FSres[inj_rng, :] = Ts[inj_rng, :] / Tn[inj_rng, :]
+    FSdet = FSres[inj_rng, :]
 
     SvTotal /= 1000
     SvEff /= 1000
@@ -211,8 +211,8 @@ def main():
         f.update_FS_axes(np.max(FSres))
         f.update_mohr_coulomb_axes(Smax, Tmax)
         f.plot_mohr_envelope(coh)
-        f.update_contour_axes(dP.min(), dP.max(), z[inj_pos][-1], z[inj_pos][0])
-        f.add_contours(x=dP, y=z[inj_pos], z=FSdet)
+        f.update_contour_axes(dP.min(), dP.max(), z[inj_rng][-1], z[inj_rng][0])
+        f.add_contours(x=dP, y=z[inj_rng], z=FSdet)
         f.update_layout()
         ss.fig2 = copy.deepcopy(f)
 
@@ -261,7 +261,7 @@ def main():
     ss.bins = nbins
     cols[2].header("Analisis results")
 
-    z_inj: NDArray[float64] = np.linspace(z[inj_pos].min(), z[inj_pos].max(), 51)
+    z_inj: NDArray[float64] = np.linspace(z[inj_rng].min(), z[inj_rng].max(), 51)
 
     f = copy.deepcopy(ss.fig3)
     if f is None or ss.run_calcs:
