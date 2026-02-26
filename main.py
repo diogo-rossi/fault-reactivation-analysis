@@ -8,7 +8,7 @@ from numpy import float64
 from numpy.typing import NDArray
 from tqdm import tqdm
 
-from calc_functions import FS, dist
+from calc_functions import SF, dist
 from dataframes import injection_layer_df, layers_df
 from figure_deterministic import DeterministicAnalisisFigure
 from figure_probabilistic import ProbabilisticAnalisisFigure
@@ -299,8 +299,8 @@ def main():
         ):
             _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g)
 
-        print("Getting FS map")
-        SFs = FS(
+        print("Getting SF map")
+        SFs = SF(
             inj_id=inj_layer_pos,
             dPo=dPini,
             gammaW=gamaW,

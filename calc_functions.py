@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from scipy.stats import truncnorm
 
 
-def FS(
+def SF(
     inj_id: int,
     dPo: float,
     gammaW: float,
