@@ -350,10 +350,6 @@ def main():
 
         f.update_layout()
 
-        print("Shape of the FS map", FSS.shape)
-        print("Max value", FSS.max())
-        print("Min value", FSS.min())
-
     if ss.fig3 is not None:
         tab3.plotly_chart(ss.fig3.fig, theme=None)
 
