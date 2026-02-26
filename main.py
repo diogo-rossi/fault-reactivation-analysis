@@ -22,6 +22,7 @@ try:
 except:
     pass
 
+plotly_chart_options = {"theme": None, "on_select": "rerun", "selection_mode": "points"}
 
 gamma: NDArray[float64] = np.zeros((VERTICAL_DIVISIONS, 1))
 
