@@ -347,6 +347,11 @@ def main():
         )
 
         f.add_SF_hist(FSS[len(dP) // 2, len(z_inj) // 2, :])
+
+        fp: NDArray[float64] = ((FSS < 1).astype(int).sum(axis=2) / Nrel) * 100.0
+        f.update_contour_axes(dP.min(), dP.max(), z_inj[-1], z_inj[0])
+        f.add_contours(dP, z_inj, fp)
+
         ss.run_calcs = False
 
         f.update_layout()
