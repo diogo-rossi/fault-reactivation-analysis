@@ -55,7 +55,6 @@ def main():
     ss.init_key("fig2", None)
     ss.init_key("fig3", None)
     ss.init_key("layer_slider_value", 460)
-    ss.init_key("dP_slider_value", 0)
     ss.init_key("SFs", None)
 
     tab1, tab2, tab3 = st.tabs(
@@ -191,6 +190,7 @@ def main():
     dP /= 1000
 
     layer = VERTICAL_DIVISIONS - ss.layer_slider_value
+    ss.init_key("dP_slider_value", 1.0 if dPmax > 0 else -1.0)
     dP_slider = ss.dP_slider_value
 
     # dP_slider *= 1000
