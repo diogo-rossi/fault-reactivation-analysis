@@ -332,7 +332,7 @@ def main():
         print("Getting FS map")
         FSS = FS(
             inj_layer_pos,
-            dPini,  # MPa
+            dPini / 1000,  # dPini: [kPa/m] -> [MPa/m]
             gamaW / 1000,  # gamaW: [kPa/m] -> [MPa/m]
             _dP,  # MPa
             _z,
@@ -342,7 +342,8 @@ def main():
             np.radians(_angtheta),
             np.radians(_friction),
             _cohesion,  # MPa
-            *gamma_thickness,  # MPa/m , m
+            gamma_data,
+            thickness,
         )
 
         f.add_SF_hist(FSS[len(dP) // 2, len(z_inj) // 2, :])
