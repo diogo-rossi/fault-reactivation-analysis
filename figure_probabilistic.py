@@ -153,7 +153,7 @@ class ProbabilisticAnalisisFigure:
             **axeskwargs,
         )
 
-    def add_contours(self, x, y, z):
+    def add_fp_contours(self, x, y, z):
         contour = Contour(
             x=x,
             y=y,

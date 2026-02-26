@@ -317,7 +317,7 @@ def main():
 
         fp: NDArray[float64] = ((SFs < 1).astype(int).sum(axis=2) / Nrel) * 100.0
         f.update_contour_axes(dP.min(), dP.max(), z_inj[-1], z_inj[0])
-        f.add_contours(dP, z_inj, fp)
+        f.add_fp_contours(dP, z_inj, fp)
         ss.SFs = SFs
         ss.fig3 = copy.deepcopy(f)
         ss.run_calcs = False
