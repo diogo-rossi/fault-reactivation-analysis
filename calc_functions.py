@@ -10,25 +10,22 @@ def FS(
     inj_id: int,
     dPo: float,
     gammaW: float,
-    dP: float,
-    z: float,
-    alpha: float,
-    Ko: float,
-    Ka: float,
-    theta: float,
-    phi: float,
-    c: float,
-    *gamma_thickness: tuple[float, float],
+    dP: NDArray[float64],
+    z: NDArray[float64],
+    alpha: NDArray[float64],
+    Ko: NDArray[float64],
+    Ka: NDArray[float64],
+    theta: NDArray[float64],
+    phi: NDArray[float64],
+    c: NDArray[float64],
+    gamma: list[NDArray[float64]],
+    thickness: list[float],
 ) -> NDArray[float64]:
-    gammas, thickness = zip(*gamma_thickness)
-    gammas = np.array(gammas)[:inj_id]
-    thickness = np.broadcast_to(
-        np.array(thickness)[:inj_id][:, None, None, None], gammas.shape
-    )
-    SvEff0 = (
-        (gammas * thickness).sum()
-        + gammas[-1] * (z - thickness.sum())
-        - alpha * (gammaW * z + dPo)
+    SvEff0 = np.zeros(gamma[0].shape)
+    for g, h in zip(gamma[:inj_id], thickness[:inj_id]):
+        SvEff0 += g * h
+    SvEff0 += gamma[-1] * (z - np.array(thickness[:inj_id]).sum()) - alpha * (
+        gammaW * z + dPo
     )
     SvEff = SvEff0 - alpha * dP
     ShEff = Ko * SvEff0 - Ka * alpha * dP
