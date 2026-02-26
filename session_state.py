@@ -1,6 +1,8 @@
 import types
 from typing import Any, Literal, cast
 
+from numpy import float64
+from numpy.typing import NDArray
 from plotly.graph_objects import Figure
 from streamlit import session_state as ss
 from streamlit.runtime.state import SessionStateProxy
@@ -19,6 +21,7 @@ Keys = Literal[
     "dP_slider_value",
     "fig2",
     "fig3",
+    "SFs",
     "bins",
 ]
 
@@ -33,6 +36,7 @@ class SessionState(SessionStateProxy):
     dP_slider_value: float
     fig2: DeterministicAnalisisFigure | None
     fig3: ProbabilisticAnalisisFigure | None
+    SFs: NDArray[float64] | None
     bins: int
 
     def __getitem__(self, n) -> Any: ...

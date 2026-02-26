@@ -55,6 +55,7 @@ def main():
     ss.init_key("fig3", None)
     ss.init_key("layer_slider_value", 460)
     ss.init_key("dP_slider_value", 0)
+    ss.init_key("SFs", None)
 
     tab1, tab2, tab3 = st.tabs(
         [
