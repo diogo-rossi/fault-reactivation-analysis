@@ -132,6 +132,7 @@ class ProbabilisticAnalisisFigure:
             height=650,
             margin=dict(l=50, r=40, t=30, b=0),
             showlegend=True,
+            dragmode="zoom",
         )
         self.fig.update_traces(marker_line_width=0, selector=dict(type="histogram"))
 
@@ -172,36 +173,30 @@ class ProbabilisticAnalisisFigure:
             name="SF map",
             showlegend=False,
         )
-        # contour_line = Contour(
-        #     x=x,
-        #     y=y,
-        #     z=z,
-        #     contours=dict(
-        #         start=1.0,
-        #         end=1.0,
-        #         size=0.001,
-        #         coloring="none",
-        #         showlabels=True,
-        #         labelformat=".1f",
-        #         labelfont=dict(size=16, color="black"),
-        #     ),
-        #     line=dict(color="black", width=2),
-        #     showscale=False,
-        #     coloraxis=None,
-        #     colorscale=None,
-        #     name="SF map",
-        #     showlegend=False,
-        # )
-        # X, Y = np.meshgrid(x, y[0 : -1 : int(len(y) / 50)])
-        # mesh = Scatter(
-        #     x=X.flatten(),
-        #     y=Y.flatten(),
-        #     mode="markers",
-        #     marker=dict(size=5, color="rgba(0,0,0,0)"),
-        #     visible=True,
-        #     showlegend=False,
-        #     name="ΔP vs z",
-        # )
+        X, Y = np.meshgrid(x, y[0 : -1 : int(len(y) / 50)])
+        mesh = Scatter(
+            x=X.flatten(),
+            y=Y.flatten(),
+            mode="markers",
+            marker=dict(size=5, color="rgba(0,0,0,0)"),
+            visible=True,
+            showlegend=False,
+            name="ΔP vs z",
+        )
         self.fig.add_trace(contour, row=2, col=4)
-        # self.fig.add_trace(contour_line, row=2, col=4)
-        # self.fig.add_trace(mesh, row=2, col=4)
+        self.fig.add_trace(mesh, row=2, col=4)
+
+    def update_current_point(self, p, z):
+        self.fig.add_hline(z, 2, 4, line_color="black", line_width=2)  # type: ignore
+        self.fig.add_vline(p, 2, 4, line_color="black", line_width=2)  # type: ignore
+        self.fig.add_trace(
+            row=2,
+            col=4,
+            trace=Scatter(
+                x=[p],
+                y=[z],
+                name="Current",
+                line=Line(color="black", width=1),
+                showlegend=False,
+            ),
+        )
