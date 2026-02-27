@@ -46,11 +46,10 @@ class SessionState(SessionStateProxy):
     def get(self, n: Keys, default: Any | None = None):
         return super().get(n, default)
 
-    def init_key(self, key: Keys, value: Any):
-        if key not in ss:
-            self[key] = value
 
+def init_key(key: Keys, value: Any):
+    if key not in ss:
+        ss[key] = value
 
-setattr(ss, "init_key", types.MethodType(SessionState.init_key, ss))
 
 ss = cast(SessionState, ss)

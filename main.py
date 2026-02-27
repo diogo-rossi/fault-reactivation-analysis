@@ -34,7 +34,7 @@ def main():
     import streamlit as st
 
     from column_configs import col_conf_injection_layer, col_conf_layers
-    from session_state import ss
+    from session_state import ss, init_key
 
     st.set_page_config(layout="wide")
     st.markdown(
@@ -51,12 +51,12 @@ def main():
         unsafe_allow_html=True,
     )
 
-    ss.init_key("run_calcs", True)
-    ss.init_key("fig2", None)
-    ss.init_key("fig3", None)
-    ss.init_key("layer_slider_value", 460)
-    ss.init_key("SFs", None)
-    ss.init_key("fp", None)
+    init_key("run_calcs", True)
+    init_key("fig2", None)
+    init_key("fig3", None)
+    init_key("layer_slider_value", 460)
+    init_key("SFs", None)
+    init_key("fp", None)
 
     tab1, tab2, tab3 = st.tabs(
         [
