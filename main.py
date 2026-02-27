@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 
 import numpy as np
-import streamlitrunner as sr
 from numpy import float64
 from numpy.typing import NDArray
 from tqdm import tqdm
@@ -370,5 +369,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    sr.run(main, screen=1, open_as_app=True, fill_page_content=False)
+    main()
