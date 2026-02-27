@@ -329,7 +329,7 @@ def main():
     z_inj_layer_idx = np.searchsorted(z_inj, z[layer])
     f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])
     assert ss.SFs is not None and ss.fp is not None
-    f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :])
+    f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :], ss.fp[dPstep, z_inj_layer_idx])
     f.update_layout()
 
     event3 = tab3.plotly_chart(f.fig, **plotly_chart_options)

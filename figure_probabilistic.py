@@ -35,7 +35,7 @@ class ProbabilisticAnalisisFigure:
         self.rows = [1, 1, 1, 2, 2, 2, 1]
         self.cols = [1, 2, 3, 1, 2, 3, 4]
 
-    def add_SF_hist(self, hist: NDArray[float64]):
+    def add_SF_hist(self, hist: NDArray[float64], fp: float):
         name = "Security Factor - SF"
         row, col = 1, 4
         max_value = float(int(min([hist.max(), 10])))
@@ -74,6 +74,7 @@ class ProbabilisticAnalisisFigure:
             line_color="red",
             opacity=1,
         )
+        self.add_annotation(1, 4, hist, extra=f"\nPf = {fp:.2f} %")
 
     def add_var_hist(self, i, data, hist):
         self.fig.update_yaxes(
@@ -97,12 +98,24 @@ class ProbabilisticAnalisisFigure:
             row=self.rows[i],
             col=self.cols[i],
         )
+        self.add_annotation(self.rows[i], self.cols[i], hist)
+
+    def add_annotation(self, row, col, hist, extra=""):
+        mini = np.min(hist)
+        maxi = np.max(hist)
+        mean = np.mean(hist)
+        stdev = np.std(hist)
+        counts, bin_edges = np.histogram(hist, bins=self.num_bins)
+        max_bin_index = np.argmax(counts)
+        mode = (bin_edges[max_bin_index] + bin_edges[max_bin_index + 1]) / 2
         self.fig.add_annotation(
-            text=f"Mean = {data[2]:.2f}<br>"
-            f"Std = {data[3]:.2f}<br>"
-            f"Min = {data[4]:.2f}<br>"
-            f"Max = {data[5]:.2f}<br>"
-            f"Samples = {self.num_realizations}",
+            text=f"Mean = {mean:.2f}<br>"
+            f"Std dev = {stdev:.2f}<br>"
+            f"Minimum = {mini:.2f}<br>"
+            f"Maximum = {maxi:.2f}<br>"
+            f"Mode = {mode:.2f}<br>"
+            f"Samples = {self.num_realizations}<br>"
+            f"{extra}",
             xref="x2 domain",
             yref="y2 domain",
             x=0.98,
@@ -112,8 +125,8 @@ class ProbabilisticAnalisisFigure:
             bordercolor="black",
             borderwidth=1,
             bgcolor="white",
-            row=self.rows[i],
-            col=self.cols[i],
+            row=row,
+            col=col,
         )
 
     def update_layout(self):
@@ -140,7 +153,6 @@ class ProbabilisticAnalisisFigure:
             row=2,
             col=4,
             title_text=f"Injection layer depth [m]",
-            side="right",
             range=[zmin, zmax],
             **axeskwargs,
         )
@@ -157,10 +169,13 @@ class ProbabilisticAnalisisFigure:
                 showlines=False,
             ),
             colorbar=dict(
-                x=1.05,
+                x=1.01,
                 y=0.23,
                 len=0.5,
-                title=dict(text="Safety Factor (SF)", side="right"),
+                title=dict(
+                    text="Probability of fault reactivation (failure) - Pf (%)",
+                    side="right",
+                ),
             ),
             name="SF map",
             showlegend=False,
