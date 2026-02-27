@@ -191,7 +191,7 @@ def main():
     dP /= 1000
 
     layer = VERTICAL_DIVISIONS - ss.layer_slider_value
-    ss.init_key("dP_slider_value", 1.0 if dPmax > 0 else -1.0)
+    init_key("dP_slider_value", 1.0 if dPmax > 0 else -1.0)
     dP_slider = ss.dP_slider_value
 
     # dP_slider *= 1000
