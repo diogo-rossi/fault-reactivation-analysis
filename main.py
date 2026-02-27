@@ -80,7 +80,7 @@ def main():
     gamaW = cols[4].number_input(value=10.0, label="Water gradient [kN/m³]")
     listcontainer = cols[5].container()
 
-    Nrel = cols[6].number_input("Number of realizations", value=1000)
+    Nrel = cols[6].number_input("Number of realizations", value=5000)
     cols[7].button("Run", on_click=set_run_calcs)
 
     ## DATAFRAMES
@@ -257,7 +257,7 @@ def main():
 
     cols = tab3.columns([6, 1, 4])
     cols[0].header("Histogram distribution of the injection layer parameters")
-    nbins = cols[1].number_input("Number of bins", value=100, on_change=set_run_calcs)
+    nbins = cols[1].number_input("Number of bins", value=50, on_change=set_run_calcs)
     ss.bins = nbins
     cols[2].header("Analisis results")
 
