@@ -22,6 +22,7 @@ Keys = Literal[
     "fig2",
     "fig3",
     "SFs",
+    "fp",
     "bins",
 ]
 
@@ -37,6 +38,7 @@ class SessionState(SessionStateProxy):
     fig2: DeterministicAnalisisFigure | None
     fig3: ProbabilisticAnalisisFigure | None
     SFs: NDArray[float64] | None
+    fp: NDArray[float64] | None
     bins: int
 
     def __getitem__(self, n) -> Any: ...

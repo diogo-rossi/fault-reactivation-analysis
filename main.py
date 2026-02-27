@@ -56,6 +56,7 @@ def main():
     ss.init_key("fig3", None)
     ss.init_key("layer_slider_value", 460)
     ss.init_key("SFs", None)
+    ss.init_key("fp", None)
 
     tab1, tab2, tab3 = st.tabs(
         [
@@ -320,13 +321,14 @@ def main():
         f.update_contour_axes(dP.min(), dP.max(), z_inj[-1], z_inj[0])
         f.add_fp_contours(dP, z_inj, fp)
         ss.SFs = SFs
+        ss.fp = fp
         ss.fig3 = copy.deepcopy(f)
         ss.run_calcs = False
         print("-" * COLUMNS)
 
     z_inj_layer_idx = np.searchsorted(z_inj, z[layer])
     f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])
-    assert ss.SFs is not None
+    assert ss.SFs is not None and ss.fp is not None
     f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :])
     f.update_layout()
 
