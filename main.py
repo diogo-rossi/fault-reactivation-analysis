@@ -80,7 +80,7 @@ def main():
     gamaW = cols[4].number_input(value=10.0, label="Water gradient [kN/m³]")
     listcontainer = cols[5].container()
 
-    Nrel = cols[6].number_input("Number of realizations", value=5000)
+    Nrel = cols[6].number_input("Number of realizations", value=1000)
     cols[7].button("Run", on_click=set_run_calcs)
 
     ## DATAFRAMES
