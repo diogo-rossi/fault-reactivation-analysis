@@ -326,7 +326,7 @@ def main():
         ss.run_calcs = False
         print("-" * COLUMNS)
 
-    z_inj_layer_idx = np.searchsorted(z_inj, z[layer])
+    z_inj_layer_idx = np.min([np.searchsorted(z_inj, z[layer]), len(z_inj) - 1])
     f.update_current_point(dP[dPstep], z_inj[z_inj_layer_idx])
     assert ss.SFs is not None and ss.fp is not None
     f.add_SF_hist(ss.SFs[dPstep, z_inj_layer_idx, :], ss.fp[dPstep, z_inj_layer_idx])
