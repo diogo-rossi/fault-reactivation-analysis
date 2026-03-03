@@ -13,24 +13,6 @@ dependencies = [
     "tqdm>=4.67.3",
 ]
 
-[dependency-groups]
-dev = [
-    "taskipy>=1.14.1",
-    "pytest>=8.3.4",
-    "black>=26.1.0",
-]
-docs = [
-    "sphinx>=8.1.3",
-    "myst-parser>=4.0.0",
-    "furo>=2024.8.6",
-    "sphinx-copybutton>=0.5.2",
-    "sphinxnotes-comboroles>=1.0",
-    "mkdocs>=1.6.1",
-    "mkdocstrings-python>=1.18.2",
-    "mkdocs-material>=9.6.22",
-    "sphinx-paramlinks>=0.6.0",
-]
-
 [tool.taskipy.tasks]
 docs = { cmd = "make html", cwd = "./docs/sphinx", help = "Make docs with sphinx" }
 open = { cmd = "index.html", cwd = "./docs/sphinx/build/html", help = "Open sphinx docs" }
