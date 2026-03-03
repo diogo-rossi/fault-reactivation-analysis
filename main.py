@@ -34,7 +34,7 @@ def main():
     import streamlit as st
 
     from column_configs import col_conf_injection_layer, col_conf_layers
-    from session_state import ss, init_key
+    from session_state import init_key, ss
 
     st.set_page_config(layout="wide")
     st.markdown(
@@ -370,5 +370,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
     sr.run(main, screen=1, open_as_app=True, fill_page_content=False)
