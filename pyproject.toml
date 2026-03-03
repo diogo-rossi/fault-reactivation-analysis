@@ -12,11 +12,3 @@ dependencies = [
     "streamlitrunner>=0.1.2",
     "tqdm>=4.67.3",
 ]
-
-[tool.taskipy.tasks]
-docs = { cmd = "make html", cwd = "./docs/sphinx", help = "Make docs with sphinx" }
-open = { cmd = "index.html", cwd = "./docs/sphinx/build/html", help = "Open sphinx docs" }
-test = { cmd = "pytest", cwd = "./tests", help = "Test with pytest" }
-
-[tool.pytest.ini_options]
-addopts = "-rx -vv -s --tb=short"
