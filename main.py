@@ -75,7 +75,7 @@ def main():
 
     cols = tab1.columns([13, 5, 4, 4, 4, 5, 4, 3])
     cols[0].header("Parameters of the injection layer")
-    dPini = cols[1].number_input(value=0.0, label="Initial overpressure [MPa]")
+    dPini = cols[1].number_input(value=1.0, label="Initial overpressure [MPa]")
     dPmax = cols[2].number_input(value=5.0, label="Maximum ΔP [MPa]")
     numDP = cols[3].number_input(value=50, label="Number of steps")
     gamaW = cols[4].number_input(value=10.0, label="Water gradient [kN/m³]")
