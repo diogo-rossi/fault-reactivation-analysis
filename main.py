@@ -300,7 +300,7 @@ def main():
         ):
             _, _, gamma_data[i] = np.meshgrid(dP, z_inj, g)
 
-        print("---- Getting meshgrid for theta")
+        print("---- Getting Safety Factor map (SF)")
         SFs = SF(
             inj_id=inj_layer_pos,
             dPo=dPini,
