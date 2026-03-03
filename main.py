@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 
 import numpy as np
-import streamlitrunner as sr
 from numpy import float64
 from numpy.typing import NDArray
 from tqdm import tqdm
