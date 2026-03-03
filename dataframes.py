@@ -27,7 +27,7 @@ layers_df = DataFrame(
             "Fourth layer name",
             "Fifth layer name",
         ],
-        "depth": [100, 200, 800, 1800, 2000],
+        "depth": [100, 200, 1850, 3000, 3500],
         "distr": ["Normal", "Normal", "Normal", "Normal", "Normal"],
         "average": [24.50, 25.00, 25.50, 25.60, 25.70],
         "stddevi": [1.715, 1.750, 1.785, 1.792, 1.799],
