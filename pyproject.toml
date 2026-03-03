@@ -11,3 +11,5 @@ dependencies = [
     "streamlit-vertical-slider>=2.5.5",
     "tqdm>=4.67.3",
 ]
+[tool.poetry]
+package-mode = false
